@@ -21,7 +21,8 @@ fetch("/api/salon")
   });
 
 // Web Speech
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
 const synth = window.speechSynthesis;
 
 function speak(text) {
@@ -37,22 +38,37 @@ function speak(text) {
 function addMsg(role, text) {
   const div = document.createElement("div");
   div.className = `msg ${role}`;
-  div.innerHTML = `<span class="who">${role === "user" ? "Du" : "Agent"}</span><span>${text}</span>`;
+  div.innerHTML = `<span class="who">${
+    role === "user" ? "Du" : "Agent"
+  }</span><span>${text}</span>`;
   transcript.appendChild(div);
   transcript.scrollTop = transcript.scrollHeight;
 }
 
 async function sendToAgent(text) {
   addMsg("user", text);
+
   const r = await fetch("/api/agent", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, state: agentState })
+    body: JSON.stringify({ message: text, state: agentState }),
   });
+
   const data = await r.json();
+
   agentState = data.state || agentState;
-  addMsg("agent", data.reply);
-  speak(data.reply);
+
+  // -----------------------------------------
+  // WICHTIG: Wenn Server keine Antwort gibt → fallback
+  // -----------------------------------------
+  const replyText =
+    data.reply ||
+    data.error ||
+    "Der Agent hat leider keine Antwort zurückgegeben.";
+
+  addMsg("agent", replyText);
+  speak(replyText);
+
   confirmBtn.disabled = !agentState?.complete;
   confirmHint.textContent = agentState?.complete
     ? "Alle Angaben vorhanden. Jetzt Termin anfragen!"
@@ -61,47 +77,72 @@ async function sendToAgent(text) {
 
 function startRecognition() {
   if (!SpeechRecognition) {
-    alert("Spracherkennung wird von diesem Browser nicht unterstützt. Bitte Chrome verwenden.");
+    alert(
+      "Spracherkennung wird von diesem Browser nicht unterstützt. Bitte Chrome verwenden."
+    );
     return;
   }
+
   const rec = new SpeechRecognition();
   rec.lang = "de-DE";
   rec.interimResults = false;
   rec.maxAlternatives = 1;
 
-  rec.onstart = () => { micStatus.textContent = "Zuhören…"; micBtn.classList.add("recording"); };
-  rec.onend = () => { micStatus.textContent = "bereit"; micBtn.classList.remove("recording"); };
-  rec.onerror = (e) => { micStatus.textContent = "Fehler: " + e.error; };
+  rec.onstart = () => {
+    micStatus.textContent = "Zuhören…";
+    micBtn.classList.add("recording");
+  };
+
+  rec.onend = () => {
+    micStatus.textContent = "bereit";
+    micBtn.classList.remove("recording");
+  };
+
+  rec.onerror = (e) => {
+    micStatus.textContent = "Fehler: " + e.error;
+  };
+
   rec.onresult = (evt) => {
     const text = evt.results[0][0].transcript;
     sendToAgent(text);
   };
+
   rec.start();
 }
 
 micBtn.addEventListener("click", () => {
-  if (speaking) { synth.cancel(); speaking = false; }
+  if (speaking) {
+    synth.cancel();
+    speaking = false;
+  }
   startRecognition();
 });
 
 confirmBtn.addEventListener("click", async () => {
   const s = agentState.slots || {};
   const datetime = s.date && s.time ? `${s.date}T${s.time}` : null;
+
   const payload = {
     name: s.name,
     service: s.service,
     datetime,
     contact: s.contact,
-    notes: s.notes
+    notes: s.notes,
   };
+
   const r = await fetch("/api/appointment", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
+
   const data = await r.json();
+
   if (data.ok) {
-    addMsg("agent", "Danke! Deine Anfrage wurde an unser Team gesendet. Wir melden uns schnellstmöglich.");
+    addMsg(
+      "agent",
+      "Danke! Deine Anfrage wurde an unser Team gesendet. Wir melden uns schnellstmöglich."
+    );
     speak("Danke! Deine Anfrage wurde an unser Team gesendet.");
     confirmBtn.disabled = true;
   } else {
@@ -109,3 +150,4 @@ confirmBtn.addEventListener("click", async () => {
     speak("Leider konnte ich die Anfrage nicht senden.");
   }
 });
+
