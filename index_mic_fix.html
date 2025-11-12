@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Salon Sprach-Assistent</title>
+<style>
+  :root { --bg:#0a0a0a; --card:#111; --accent:#10b981; --text:#f8fafc; --muted:#9ca3af; --chip:#1f2937; }
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
+  body{background:var(--bg); color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; display:flex; flex-direction:column}
+  .container{max-width:920px; width:100%; margin:0 auto; padding:28px 16px; display:flex; flex-direction:column; gap:24px; flex:1}
+  .brand{display:flex; justify-content:center; align-items:center; text-align:center}
+  .brand h1{font-size:36px; font-weight:900; letter-spacing:.5px; margin:0}
+  .center{display:grid; place-items:center; gap:16px; padding:28px; background:var(--card); border-radius:18px; border:1px solid #1f1f1f}
+  .mic{width:150px; height:150px; border-radius:50%; display:grid; place-items:center; cursor:pointer; user-select:none; background:#0f172a; border:2px solid #0b1220; transition:transform .05s ease, box-shadow .2s ease}
+  .mic:hover{transform:translateY(-1px)}
+  .mic.active{box-shadow:0 0 0 10px rgba(16,185,129,0.15), 0 0 0 28px rgba(16,185,129,0.06), inset 0 0 0 2px var(--accent)}
+  .mic svg{width:68px; height:68px; fill:var(--accent)}
+  .hint{color:var(--muted); font-size:14px; text-align:center}
+  .bar{position:sticky; bottom:0; left:0; right:0; background:#fff; color:#0b0b0c; border-top:2px solid #e5e7eb; padding:12px 16px; font-size:15px}
+  .qa{max-width:920px; margin:0 auto}
+  .qa .row{display:flex; gap:12px; align-items:flex-start; padding:4px 0}
+  .qa .label{min-width:84px; font-weight:700}
+  .toast{position:fixed; top:16px; left:50%; transform:translateX(-50%); background:#111827; color:#e5e7eb; border:1px solid #374151; padding:10px 14px; border-radius:10px; font-size:14px; display:none; max-width:92%;}
+  .toast.show{display:block}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <h1 id="firmName">Salon Beispiel</h1>
+    </div>
+
+    <div class="center">
+      <button class="mic" id="micBtn" aria-label="Zum Sprechen tippen (Mikrofon zulassen)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7.002 7.002 0 0 0 6 6.92V21H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-3.08A7.002 7.002 0 0 0 19 11z"/></svg>
+      </button>
+      <div class="hint" id="status">Tippen Sie auf das Mikrofon. Der Browser fragt dann nach Mikrofon-Zugriff. Sagen Sie danach z. B.: „Ich möchte Mittwoch um 14 Uhr einen Termin.“</div>
+      <div class="hint hidden" id="compat">Hinweis: Dieser Assistent funktioniert am besten in Chrome oder Edge. Safari funktioniert, benötigt aber ggf. erneutes Antippen.</div>
+    </div>
+  </div>
+
+  <!-- Weißer Balken unten mit der letzten Frage & Antwort -->
+  <div class="bar">
+    <div class="qa">
+      <div class="row"><div class="label">Kunde:</div><div id="lastQ">—</div></div>
+      <div class="row"><div class="label">Assistent:</div><div id="lastA">—</div></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/* ====== FIRMEN-KONFIG ====== */
+const FIRM_NAME = "Salon Beispiel";
+const TEAM_EMAIL = "kontakt@salon-beispiel.de";
+const HOURS = "Mo–Fr 09:00–18:00, Sa 09:00–14:00, So geschlossen.";
+const PRICES = "Haarschnitt ab 25 €, Farbe ab 45 €, Kinder 15 €.";
+const ADDRESS = "Musterstraße 12, 50667 Köln.";
+const PHONE = "+49 221 123456";
+
+document.getElementById('firmName').textContent = FIRM_NAME;
+
+/* ====== UI ====== */
+const micBtn = document.getElementById('micBtn');
+const statusEl = document.getElementById('status');
+const lastQ = document.getElementById('lastQ');
+const lastA = document.getElementById('lastA');
+const toast = document.getElementById('toast');
+const compat = document.getElementById('compat');
+function showToast(t){ toast.textContent = t; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 2600); }
+
+/* ====== Speech ====== */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+let rec = null, listening = false, mediaStream = null;
+
+function speak(text){
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'de-DE';
+    window.speechSynthesis.speak(u);
+  }catch{}
+}
+
+/* ====== Intents ====== */
+function normalize(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
+function detectIntent(text){
+  const s = normalize(text);
+  if (/(termin|buchen|vereinbaren|reservieren)/.test(s)) return 'booking';
+  if (/(öffnungs|wann.*offen|wann.*auf|zeiten|geöffnet)/.test(s)) return 'hours';
+  if (/(preis|kosten|gebühr)/.test(s)) return 'prices';
+  if (/(adresse|wo|anschrift|standort)/.test(s)) return 'address';
+  if (/(telefon|nummer|anrufen|call)/.test(s)) return 'phone';
+  if (/(hallo|guten tag|moin|servus|hi)/.test(s)) return 'greeting';
+  if (/(danke|tschüss|auf wiedersehen|ciao)/.test(s)) return 'bye';
+  return 'fallback';
+}
+function extractAppointment(text){
+  const out = { name:null, when:null, phone:null };
+  const name = text.match(/(?:ich hei(?:s|ß)e|mein name(?: ist)?|name ist)\\s+([A-Za-zÄÖÜäöüß\\- ]{2,})/i);
+  if (name) out.name = name[1].trim();
+  const tel = text.match(/(\\+?\\d[\\d\\s\\/\\-]{5,}\\d)/);
+  if (tel) out.phone = tel[1].replace(/\\s+/g,' ').trim();
+  const when = text.match(/(?:heute|morgen|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|am\\s+\\d{1,2}[.\\/]\\d{1,2}(?:[.\\/]\\d{2,4})?|\\d{1,2}:\\d{2}\\s*uhr|\\d{1,2}\\s*uhr)/i);
+  if (when) out.when = when[0];
+  return out;
+}
+function answer(intent, text){
+  switch(intent){
+    case 'greeting': return `Willkommen bei ${FIRM_NAME}. Wie kann ich helfen – Öffnungszeiten, Preise oder Termin?`;
+    case 'hours': return `Unsere Öffnungszeiten: ${HOURS}`;
+    case 'prices': return `Unsere Preise: ${PRICES}`;
+    case 'address': return `Unsere Adresse: ${ADDRESS}`;
+    case 'phone': return `Telefonisch erreichen Sie uns unter ${PHONE}`;
+    case 'bye': return `Vielen Dank! Einen schönen Tag noch.`;
+    case 'booking': {
+      const appt = extractAppointment(text);
+      const pieces = [];
+      if (appt.when) pieces.push(`Wunschzeit: ${appt.when}`);
+      if (appt.name) pieces.push(`Name: ${appt.name}`);
+      if (appt.phone) pieces.push(`Telefon: ${appt.phone}`);
+      const summary = pieces.length ? pieces.join(" • ") : "Bitte nennen Sie mir Ihre Wunschzeit, Ihren Namen und optional Ihre Telefonnummer.";
+      prepareEmail(appt, text);
+      return `Gern – ich notiere Ihre Terminanfrage. ${summary}`;
+    }
+    default:
+      return `Ich kann Fragen zu Öffnungszeiten, Preisen, Adresse, Telefon und Terminen beantworten.`;
+  }
+}
+function prepareEmail(appt, originalText){
+  const to = TEAM_EMAIL;
+  const subj = encodeURIComponent(`Terminanfrage – ${FIRM_NAME}`);
+  const body = encodeURIComponent(
+    `Neue Terminanfrage von der Sprach-Webseite:\n\n`+
+    `Firma: ${FIRM_NAME}\n`+
+    `Wunsch: ${appt.when || "(nicht genannt)"}\n`+
+    `Name: ${appt.name || "(nicht genannt)"}\n`+
+    `Telefon: ${appt.phone || "(nicht genannt)"}\n\n`+
+    `Originalnachricht:\n"${originalText}"\n\n`+
+    `Hinweis: Diese E-Mail wurde automatisch vorbereitet.`
+  );
+  window.location.href = `mailto:${to}?subject=${subj}&body=${body}`;
+}
+
+/* ====== Flow ====== */
+function handleText(spoken){
+  lastQ.textContent = spoken;
+  const intent = detectIntent(spoken);
+  const reply = answer(intent, spoken);
+  lastA.textContent = reply;
+  speak(reply);
+}
+
+async function startListening(){
+  if (!SR){
+    compat.classList.remove('hidden');
+    statusEl.textContent = "Spracherkennung nicht verfügbar. Bitte Chrome/Edge verwenden.";
+    showToast("Ihr Browser unterstützt keine Sprachaufnahme.");
+    return;
+  }
+  try{
+    // 1) ZUERST: explizit Mikrofon-Zugriff via getUserMedia anfragen (triggert die Berechtigungsabfrage)
+    mediaStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(err){
+    showToast("Kein Mikrofonzugriff. Bitte zulassen (🔒 in der Adresszeile).");
+    statusEl.textContent = "Mikrofon wurde blockiert. Bitte erlauben und erneut tippen.";
+    return;
+  }
+  // 2) Dann SpeechRecognition initialisieren
+  if (!rec){
+    rec = new SR();
+    rec.lang = 'de-DE';
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = (e)=>{
+      let final = "";
+      for (let i=e.resultIndex;i<e.results.length;i++){
+        const r = e.results[i];
+        if (r.isFinal) final += r[0].transcript + " ";
+      }
+      final = final.trim();
+      if (final) handleText(final);
+    };
+    rec.onend = ()=>{
+      listening=false; micBtn.classList.remove('active');
+      statusEl.textContent="Tippen Sie auf das Mikrofon und sprechen Sie.";
+      // Mikrofon-Stream wieder schließen
+      try{ mediaStream.getTracks().forEach(t=>t.stop()); }catch{}
+    };
+    rec.onerror = (e)=>{
+      showToast("Aufnahmefehler: "+(e.error||"unbekannt"));
+    };
+  }
+  try{
+    rec.start();
+    listening=true;
+    micBtn.classList.add('active');
+    statusEl.textContent = "Zuhören … sprechen Sie jetzt.";
+    const greet = `Willkommen bei ${FIRM_NAME}. Fragen Sie nach Öffnungszeiten, Preisen oder nennen Sie eine Wunschzeit für einen Termin.`;
+    lastQ.textContent = "—"; lastA.textContent = greet; speak(greet);
+  }catch(err){
+    showToast("Start fehlgeschlagen. Bitte erneut tippen.");
+  }
+}
+
+micBtn.addEventListener('click', ()=>{
+  startListening();
+});
+</script>
+</body>
+</html>
