@@ -1,3 +1,7 @@
+// ===============================
+//   src/agent.js (1:1 Ersatz)
+// ===============================
+
 const fs = require("fs");
 const path = require("path");
 const { loadSalon } = require("./validate");
@@ -5,14 +9,17 @@ const { loadSalon } = require("./validate");
 const faqsPath = path.join(process.cwd(), "config", "faqs.json");
 const apptsPath = path.join(process.cwd(), "data", "appointments.json");
 
+// FAQs laden
 function loadFaqs() {
   const raw = fs.readFileSync(faqsPath, "utf-8");
   return JSON.parse(raw);
 }
 
+// FAQ-Erkennung
 function matchFaq(userText) {
   const text = userText.toLowerCase();
   const faqs = loadFaqs();
+
   for (const f of faqs) {
     if (f.tags.some((t) => text.includes(t.toLowerCase()))) {
       return f.answer_template;
@@ -21,6 +28,21 @@ function matchFaq(userText) {
   return null;
 }
 
+// Begrüßungs-Logik
+function greetingIfHallo(userText) {
+  const lower = userText.toLowerCase();
+  if (
+    lower.startsWith("hallo") ||
+    lower.startsWith("hi") ||
+    lower.startsWith("guten tag") ||
+    lower.startsWith("servus")
+  ) {
+    return "Hallo, herzlich willkommen! Ich bin Ihr persönlicher Call-Agent. Wie kann ich Ihnen helfen?";
+  }
+  return null;
+}
+
+// Fallback
 function answerGeneral() {
   const salon = loadSalon();
   return (
@@ -29,55 +51,65 @@ function answerGeneral() {
   );
 }
 
+// Termin speichern (lokal/temporär)
 function saveAppointment(appt) {
   try {
-    // Auf Vercel ist FS nur temporär – wir versuchen es dennoch (lokal nützlich)
     const list = JSON.parse(fs.readFileSync(apptsPath, "utf-8"));
     list.push({ ...appt, created_at: new Date().toISOString() });
     fs.writeFileSync(apptsPath, JSON.stringify(list, null, 2), "utf-8");
-  } catch (_) {
-    // Ignorieren, wenn nicht möglich (z. B. im Serverless)
-  }
+  } catch (_) {}
 }
 
+// Intent-Erkennung
 function intentFromText(userText) {
   const t = userText.toLowerCase();
-  if (["termin", "buchen", "vereinbaren", "appointment"].some((k) => t.includes(k))) {
+
+  // Erst: Begrüßung?
+  if (t.startsWith("hallo") || t.startsWith("hi") || t.startsWith("guten tag"))
+    return "greeting";
+
+  if (
+    ["termin", "buchen", "vereinbaren", "appointment"].some((k) =>
+      t.includes(k)
+    )
+  ) {
     return "appointment";
   }
+
   if (matchFaq(userText)) return "faq";
+
   return "fallback";
 }
 
+// Vereinfachte Termin-Slot-Erkennung
 function collectAppointmentSlots(userText, state = {}) {
   let s = { ...state };
-  const maybeName = userText.match(/\b(ich bin|mein name ist)\s+([a-zäöüß\- ]+)/i);
+
+  // Name erkennen
+  const maybeName = userText.match(
+    /\b(ich bin|mein name ist)\s+([a-zäöüß\- ]+)/i
+  );
   if (!s.name && maybeName) s.name = maybeName[2].trim();
 
-  const services = loadSalon().services.map((x) => x.name.toLowerCase());
-  for (const svc of services) {
-    if (!s.service && userText.toLowerCase().includes(svc)) s.service = svc;
-  }
-
-  const dateMatch = userText.match(/\b(20\d{2}-\d{2}-\d{2})\b/);        // YYYY-MM-DD
-  const timeMatch = userText.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);   // HH:MM
+  // Datum (YYYY-MM-DD)
+  const dateMatch = userText.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
   if (!s.date && dateMatch) s.date = dateMatch[1];
+
+  // Zeit (HH:MM)
+  const timeMatch = userText.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
   if (!s.time && timeMatch) s.time = timeMatch[0];
 
-  const contact = userText.match(/\b\S+@\S+\.\S+|\+?\d[\d\s\-\/]{6,}\b/);
-  if (!s.contact && contact) s.contact = contact[0];
-
+  // Fehlende Angaben
   const missing = [];
   if (!s.name) missing.push("deinen Namen");
-  if (!s.service) missing.push("gewünschten Service");
-  if (!s.date) missing.push("Datum (YYYY-MM-DD)");
-  if (!s.time) missing.push("Uhrzeit (HH:MM)");
-  if (!s.contact) missing.push("Kontakt (Telefon oder E-Mail)");
+  if (!s.date) missing.push("das Datum (YYYY-MM-DD)");
+  if (!s.time) missing.push("die Uhrzeit (HH:MM)");
 
   const complete = missing.length === 0;
+
   const nextPrompt = complete
-    ? "Perfekt. Ich prüfe kurz die Öffnungszeiten und sende eine Anfrage an unser Team. Einverstanden?"
-    : `Um die Terminanfrage zu erstellen, brauche ich noch: ${missing.join(", ")}.`;
+    ? "Alles klar! Soll ich diesen Termin jetzt an unser Team senden?"
+    : `Ich brauche noch: ${missing.join(", ")}.`;
 
   return { slots: s, complete, nextPrompt };
 }
@@ -85,8 +117,10 @@ function collectAppointmentSlots(userText, state = {}) {
 module.exports = {
   loadFaqs,
   matchFaq,
+  greetingIfHallo,
   answerGeneral,
   saveAppointment,
   intentFromText,
   collectAppointmentSlots
 };
+
