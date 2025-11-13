@@ -1,5 +1,5 @@
 // ===============================
-//   public/app.js – UI + kurzer Chatverlauf
+// public/app.js – kurzer Chat + TTS ohne Emoji
 // ===============================
 
 const $ = (s) => document.querySelector(s);
@@ -13,6 +13,14 @@ const sendBtn = $("#send_btn");
 
 let agentState = { slots: {}, complete: false };
 let speaking = false;
+
+// Emojis aus Text entfernen (nur für Sprachausgabe!)
+function removeEmojis(text) {
+  return text.replace(
+    /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u26FF])/g,
+    ""
+  );
+}
 
 // Stammdaten laden
 fetch("/api/salon")
@@ -56,7 +64,10 @@ function speak(text) {
     if (!text || typeof text !== "string") return;
     if (synth.speaking) synth.cancel();
 
-    const utter = new SpeechSynthesisUtterance(text);
+    const clean = removeEmojis(text); // 👉 Emojis raus für Sprache
+    if (!clean.trim()) return;
+
+    const utter = new SpeechSynthesisUtterance(clean);
     utter.lang = "de-DE";
     const voice = getGermanVoice();
     if (voice) utter.voice = voice;
@@ -79,6 +90,7 @@ function speak(text) {
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
+// Nachricht ins Chatfenster schreiben
 function addMsg(role, text) {
   const div = document.createElement("div");
   div.className = `msg ${role}`;
@@ -87,7 +99,7 @@ function addMsg(role, text) {
   }</span><span>${text}</span>`;
   transcript.appendChild(div);
 
-  // NUR die letzten 4 Nachrichten behalten
+  // Nur die letzten 4 Nachrichten behalten
   while (transcript.children.length > 4) {
     transcript.removeChild(transcript.firstChild);
   }
@@ -95,7 +107,7 @@ function addMsg(role, text) {
   transcript.scrollTop = transcript.scrollHeight;
 }
 
-// Termin an Server senden (wird vom Button und von auto_send genutzt)
+// Termin an Server senden
 async function sendAppointment() {
   const s = agentState.slots || {};
   const datetime = s.date && s.time ? `${s.date}T${s.time}` : null;
@@ -103,7 +115,7 @@ async function sendAppointment() {
   const payload = {
     name: s.name,
     datetime,
-    contact: s.contact,
+    contact: s.phone || s.contact, // phone bevorzugt
     notes: s.notes
   };
 
@@ -133,6 +145,7 @@ async function sendAppointment() {
   }
 }
 
+// Nachricht an den Agent-Backend schicken
 async function sendToAgent(text) {
   if (!text || !text.trim()) return;
   const clean = text.trim();
@@ -164,6 +177,7 @@ async function sendToAgent(text) {
   }
 }
 
+// Spracherkennung
 function startRecognition() {
   if (!SpeechRecognition) {
     alert(
@@ -196,7 +210,8 @@ function startRecognition() {
   rec.start();
 }
 
-// Mic-Button
+// Events
+
 micBtn.addEventListener("click", () => {
   if (hasTTS && speaking) {
     synth.cancel();
@@ -205,13 +220,11 @@ micBtn.addEventListener("click", () => {
   startRecognition();
 });
 
-// Text-Chat: Button
 sendBtn.addEventListener("click", () => {
   const text = textInput.value;
   sendToAgent(text);
 });
 
-// Text-Chat: Enter-Taste
 textInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
@@ -220,7 +233,6 @@ textInput.addEventListener("keydown", (e) => {
   }
 });
 
-// Termin absenden (manuell per Button)
 confirmBtn.addEventListener("click", async () => {
   await sendAppointment();
 });
