@@ -1,5 +1,5 @@
 // ===============================
-//   api/appointment.js (aktualisiert mit besserem Fehler-Logging)
+//   api/appointment.js (kompletter Ersatz)
 // ===============================
 
 const { validateAppointment } = require("../src/validate");
@@ -13,15 +13,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { name, datetime, notes } = req.body || {};
-    const payload = { name, datetime, notes };
+    const { name, datetime, contact, notes } = req.body || {};
+    const payload = { name, datetime, contact, notes };
 
     const val = validateAppointment(payload);
     if (!val.ok) {
       return res.status(400).json({ error: val.reason });
     }
 
-    // lokal/temporär speichern (auf Vercel nicht dauerhaft)
+    // lokal/temporär speichern
     saveAppointment(payload);
 
     // E-Mail senden
@@ -40,3 +40,4 @@ module.exports = async (req, res) => {
     });
   }
 };
+
