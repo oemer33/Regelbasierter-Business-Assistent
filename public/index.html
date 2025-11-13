@@ -3,32 +3,42 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dein Salonname – Call Agent</title>
+  <title>Dein Salonname – Call & Chat Agent</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <header>
     <h1 id="company_name">Dein Salonname</h1>
-    <p class="sub">Sprach-Call-Agent · Fragen & Terminanfrage</p>
+    <p class="sub">Sprach- & Chat-Call-Agent · Fragen & Terminanfrage</p>
   </header>
 
   <main>
     <section class="mic-panel">
-      <button id="mic_btn" aria-label="Mikrofon um zu sprechen">🎤 Sprechen</button>
-      <span id="mic_status" class="muted">bereit</span>
+      <div class="mic-left">
+        <button id="mic_btn" aria-label="Mikrofon um zu sprechen">🎤 Sprechen</button>
+        <span id="mic_status" class="muted">bereit</span>
+      </div>
+      <div class="mic-right muted">
+        Du kannst auch unten deine Nachricht tippen und auf <b>Senden</b> klicken.
+      </div>
     </section>
 
     <section class="transcript" id="transcript"></section>
 
+    <section class="input-row">
+      <input id="text_input" type="text" placeholder="Nachricht eingeben und Enter drücken oder auf Senden klicken …" />
+      <button id="send_btn">Senden</button>
+    </section>
+
     <section class="cta">
       <button id="confirm_btn" class="primary" disabled>Terminanfrage absenden</button>
-      <small id="confirm_hint" class="muted">Wird aktiv, wenn alle Angaben vorhanden sind.</small>
+      <small id="confirm_hint" class="muted">Wird aktiv, wenn Name, Datum, Uhrzeit und Kontakt vorhanden sind.</small>
     </section>
 
     <section class="legal">
       <details>
         <summary>Datenschutzhinweis</summary>
-        <p>Audio wird nur lokal verarbeitet (Browser Web Speech API). Es werden keine Sprachdaten an den Server gesendet. Bei einer Terminanfrage werden Name, Service, Wunschzeit und Kontakt zum Zweck der Terminvergabe an unser Team gemailt.</p>
+        <p>Audio wird nur lokal verarbeitet (Browser Web Speech API). Es werden keine Sprachdaten an den Server gesendet. Bei einer Terminanfrage werden Name, Datum, Uhrzeit und Kontakt zum Zweck der Terminvergabe an unser Team gemailt.</p>
       </details>
     </section>
   </main>
