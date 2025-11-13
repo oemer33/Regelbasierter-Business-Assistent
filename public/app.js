@@ -1,7 +1,7 @@
 // ===============================
 //   public/app.js (kompletter Ersatz)
-//   - Sprach- und Texteingabe
-//   - Termin: name, date, time, contact
+//   - Sprach + Text
+//   - Auto-Senden bei "ja" (auto_send)
 // ===============================
 
 const $ = (s) => document.querySelector(s);
@@ -68,8 +68,12 @@ function speak(text) {
     utter.pitch = 1.0;
 
     speaking = true;
-    utter.onend = () => { speaking = false; };
-    utter.onerror = () => { speaking = false; };
+    utter.onend = () => {
+      speaking = false;
+    };
+    utter.onerror = () => {
+      speaking = false;
+    };
 
     synth.speak(utter);
   } catch (_) {}
@@ -89,6 +93,44 @@ function addMsg(role, text) {
   transcript.scrollTop = transcript.scrollHeight;
 }
 
+// Termin an Server senden (wird vom Button und von auto_send genutzt)
+async function sendAppointment() {
+  const s = agentState.slots || {};
+  const datetime = s.date && s.time ? `${s.date}T${s.time}` : null;
+
+  const payload = {
+    name: s.name,
+    datetime,
+    contact: s.contact,
+    notes: s.notes
+  };
+
+  try {
+    const r = await fetch("/api/appointment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json();
+
+    if (data.ok) {
+      const msg =
+        data.message ||
+        "Der Termin wurde an das Team gesendet! Wenn der Termin abgesagt oder verschoben wird, melden wir uns bei Ihnen.";
+      addMsg("agent", msg);
+      speak(msg);
+      confirmBtn.disabled = true;
+    } else {
+      const errMsg =
+        "Konnte nicht senden: " + (data.error || "Unbekannter Fehler");
+      addMsg("agent", errMsg);
+      speak("Leider konnte ich die Anfrage nicht senden.");
+    }
+  } catch (e) {
+    addMsg("agent", "Konnte nicht senden: Netzwerkfehler.");
+  }
+}
+
 async function sendToAgent(text) {
   if (!text || !text.trim()) return;
   addMsg("user", text.trim());
@@ -106,10 +148,16 @@ async function sendToAgent(text) {
     addMsg("agent", data.reply);
     speak(data.reply);
 
+    // Button aktivieren/deaktivieren
     confirmBtn.disabled = !agentState?.complete;
     confirmHint.textContent = agentState?.complete
-      ? "Alle Angaben vorhanden (Name, Datum, Uhrzeit, Kontakt). Jetzt Termin anfragen!"
+      ? "Alle Angaben vorhanden (Name, Datum, Uhrzeit, Kontakt). Du kannst 'Ja' sagen oder den Button klicken."
       : "Wird aktiv, wenn Name, Datum, Uhrzeit und Kontakt vorhanden sind.";
+
+    // 🔁 Auto-Senden, wenn der Server auto_send=true gesetzt hat
+    if (data.auto_send) {
+      await sendAppointment();
+    }
   } catch (e) {
     addMsg("agent", "Es gab ein Verbindungsproblem mit dem Server.");
   }
@@ -171,40 +219,7 @@ textInput.addEventListener("keydown", (e) => {
   }
 });
 
-// Termin absenden
+// Termin absenden (manuell per Button)
 confirmBtn.addEventListener("click", async () => {
-  const s = agentState.slots || {};
-  const datetime = s.date && s.time ? `${s.date}T${s.time}` : null;
-
-  const payload = {
-    name: s.name,
-    datetime,
-    contact: s.contact,
-    notes: s.notes
-  };
-
-  try {
-    const r = await fetch("/api/appointment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await r.json();
-
-    if (data.ok) {
-      const msg =
-        data.message ||
-        "Danke! Deine Anfrage wurde an unser Team gesendet. Wir melden uns schnellstmöglich.";
-      addMsg("agent", msg);
-      speak(msg);
-      confirmBtn.disabled = true;
-    } else {
-      const errMsg =
-        "Konnte nicht senden: " + (data.error || "Unbekannter Fehler");
-      addMsg("agent", errMsg);
-      speak("Leider konnte ich die Anfrage nicht senden.");
-    }
-  } catch (e) {
-    addMsg("agent", "Konnte nicht senden: Netzwerkfehler.");
-  }
+  await sendAppointment();
 });
