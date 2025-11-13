@@ -1,5 +1,5 @@
 // ===============================
-//   src/validate.js (1:1 Ersatz)
+//   src/validate.js (kompletter Ersatz)
 // ===============================
 
 const fs = require("fs");
@@ -39,13 +39,16 @@ function withinOpeningHours(dateISO) {
   return { ok: true };
 }
 
-// NUR Name + datetime sind Pflicht
+// Name + datetime + contact sind Pflicht
 function validateAppointment(payload) {
   if (!payload.name)
     return { ok: false, reason: "Name fehlt." };
 
   if (!payload.datetime)
     return { ok: false, reason: "Datum und Uhrzeit fehlen." };
+
+  if (!payload.contact)
+    return { ok: false, reason: "Kontakt (Telefon oder E-Mail) fehlt." };
 
   const win = withinOpeningHours(payload.datetime);
   if (!win.ok) return win;
