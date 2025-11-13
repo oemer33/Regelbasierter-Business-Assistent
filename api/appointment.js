@@ -1,5 +1,5 @@
 // ===============================
-//   api/appointment.js (1:1 Ersatz)
+//   api/appointment.js (aktualisiert mit besserem Fehler-Logging)
 // ===============================
 
 const { validateAppointment } = require("../src/validate");
@@ -13,20 +13,18 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Frontend schickt: name, datetime, optional notes
     const { name, datetime, notes } = req.body || {};
     const payload = { name, datetime, notes };
 
-    // Nur Name + datetime prüfen
     const val = validateAppointment(payload);
     if (!val.ok) {
       return res.status(400).json({ error: val.reason });
     }
 
-    // Versuchen, lokal zu speichern (funktioniert lokal, auf Vercel ggf. nur temporär)
+    // lokal/temporär speichern (auf Vercel nicht dauerhaft)
     saveAppointment(payload);
 
-    // E-Mail versenden
+    // E-Mail senden
     const transport = makeTransport(process.env);
     await sendAppointmentMail(transport, process.env, payload);
 
@@ -34,7 +32,6 @@ module.exports = async (req, res) => {
       ok: true,
       message: "Der Termin wurde an das Team gesendet!"
     });
-
   } catch (e) {
     console.error("Fehler beim Versenden der E-Mail:", e);
     return res.status(500).json({
