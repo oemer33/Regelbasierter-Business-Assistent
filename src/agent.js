@@ -1,8 +1,9 @@
 // ===============================
 //   src/agent.js (kompletter Ersatz)
 //   - Termin-Slots: name, date, time, contact
-//   - Begrüßung "Hallo, herzlich willkommen ..."
-//   - Datum: 2025-11-13 oder 13.11.2025
+//   - Begrüßung "Ich bin Ihr persönlicher Call- und Chat-Agent"
+//   - Bessere Namenerkennung
+//   - Datum: 2025-12-24 oder 24.12.2025
 //   - Zeit: 14:00, 14 Uhr, um 14
 // ===============================
 
@@ -46,12 +47,12 @@ function greetingIfHallo(userText) {
   return null;
 }
 
-// Fallback-Antwort
+// Fallback-Antwort mit Kontaktinfo
 function answerGeneral() {
   const salon = loadSalon();
   return (
-    "Das habe ich leider nicht verstanden. Ich kann Fragen zu Öffnungszeiten, Preisen, Adresse oder Zahlung beantworten. " +
-    `Oder ich nehme gern eine Terminanfrage auf. Unser Salon heißt "${salon.company_name}".`
+    "Ich bin der digitale Assistent deines Salons. Ich kann dir bei Öffnungszeiten, Preisen, Adresse, Zahlung und Terminanfragen helfen. " +
+    `Wenn du eine komplexere Frage hast, kannst du uns auch direkt kontaktieren: Telefon ${salon.phone}, E-Mail ${salon.email}.`
   );
 }
 
@@ -66,7 +67,7 @@ function saveAppointment(appt) {
   }
 }
 
-// Intent-Erkennung
+// Intent-Erkennung (ohne State)
 function intentFromText(userText) {
   const t = userText.toLowerCase();
 
@@ -147,24 +148,44 @@ function extractTimeToHHMM(userText) {
 
 // Kontakt (Telefon oder E-Mail) aus Text holen
 function extractContact(userText) {
-  // E-Mail oder Telefonnummer (mind. 7 Ziffern)
   const contactMatch = userText.match(
     /\b\S+@\S+\.\S+|\+?\d[\d\s\-\/]{6,}\b/
   );
   return contactMatch ? contactMatch[0] : null;
 }
 
-// Name + Datum + Uhrzeit + Kontakt aus dem Text sammeln
+// Name aus Text holen (robust)
+function extractName(userText) {
+  // 1) "ich bin Tom", "mein Name ist Tom", "ich heiße Tom"
+  const namePhrase = userText.match(
+    /\b(ich bin|mein name ist|ich heiße|ich heisse)\s+([A-ZÄÖÜ][a-zäöüß\-]+(?:\s+[A-ZÄÖÜ][a-zäöüß\-]+)*)/i
+  );
+  if (namePhrase) {
+    return namePhrase[2].trim();
+  }
+
+  // 2) sehr kurze Eingaben wie "Tom", "Tom Müller"
+  const trimmed = userText.trim();
+  if (
+    trimmed.length > 0 &&
+    trimmed.split(/\s+/).length <= 3 &&
+    /^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß\- ]+$/.test(trimmed)
+  ) {
+    return trimmed;
+  }
+
+  return null;
+}
+
+// Slots sammeln
 function collectAppointmentSlots(userText, state = {}) {
   let s = { ...state };
   const text = userText.toLowerCase();
 
-  // Name erkennen
-  const maybeName = userText.match(
-    /\b(ich bin|mein name ist)\s+([a-zäöüß\- ]+)/i
-  );
-  if (!s.name && maybeName) {
-    s.name = maybeName[2].trim();
+  // Name
+  if (!s.name) {
+    const n = extractName(userText);
+    if (n) s.name = n;
   }
 
   // Datum
@@ -183,7 +204,7 @@ function collectAppointmentSlots(userText, state = {}) {
     }
   }
 
-  // Kontakt (Telefon oder E-Mail)
+  // Kontakt
   if (!s.contact) {
     const contact = extractContact(userText);
     if (contact) {
@@ -193,7 +214,7 @@ function collectAppointmentSlots(userText, state = {}) {
 
   const missing = [];
   if (!s.name) missing.push("deinen Namen");
-  if (!s.date) missing.push("das Datum (z.B. 13.11.2025)");
+  if (!s.date) missing.push("das Datum (z.B. 13.12.2050)");
   if (!s.time) missing.push("die Uhrzeit (z.B. 14 Uhr)");
   if (!s.contact) missing.push("deine Telefonnummer oder E-Mail");
 
@@ -215,3 +236,4 @@ module.exports = {
   intentFromText,
   collectAppointmentSlots
 };
+
