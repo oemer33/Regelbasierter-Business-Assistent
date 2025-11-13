@@ -1,233 +1,185 @@
-// ===============================
-//   src/agent.js (kompletter Ersatz)
-//   - Termin-Slots: name, date, time, contact
-//   - Begrüßung als Call- & Chat-Agent
-//   - Datum: 2025-12-24 oder 24.12.2025
-//   - Zeit: 14:00, 14 Uhr, um 14
-// ===============================
+// =======================================
+// src/agent.js – mit zufälligen Antworten,
+// lockerer Begrüßung & FAQ aus JSON
+// =======================================
 
 const fs = require("fs");
 const path = require("path");
-const { loadSalon } = require("./validate");
 
-const faqsPath = path.join(process.cwd(), "config", "faqs.json");
-const apptsPath = path.join(process.cwd(), "data", "appointments.json");
-
-// FAQs laden
-function loadFaqs() {
-  const raw = fs.readFileSync(faqsPath, "utf-8");
-  return JSON.parse(raw);
+// --------------------------------------------------------
+// Zufällige Antwort auswählen
+// --------------------------------------------------------
+function pickRandom(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return null;
+  const idx = Math.floor(Math.random() * arr.length);
+  return arr[idx];
 }
 
-// FAQ-Erkennung
+// --------------------------------------------------------
+// FAQs laden
+// --------------------------------------------------------
+function loadFaqs() {
+  const p = path.join(process.cwd(), "config", "faqs.json");
+  return JSON.parse(fs.readFileSync(p, "utf8"));
+}
+
+// --------------------------------------------------------
+// Lockere Begrüßung mit Emojis & mehreren Varianten
+// --------------------------------------------------------
+function greetingIfHallo(userText) {
+  const lower = userText.toLowerCase().trim();
+
+  const isGreeting =
+    lower.startsWith("hallo") ||
+    lower.startsWith("hi") ||
+    lower.startsWith("hey") ||
+    lower.startsWith("guten tag") ||
+    lower.startsWith("servus");
+
+  if (!isGreeting) return null;
+
+  const options = [
+    "Hallo 👋 Wie kann ich dir helfen?",
+    "Hi 😊 Was kann ich für dich tun?",
+    "Hey! Wobei darf ich dich unterstützen?",
+    "Willkommen im Salon-Chat ✨ Wie kann ich helfen?"
+  ];
+
+  return pickRandom(options);
+}
+
+// --------------------------------------------------------
+// FAQ-Erkennung (mit 3 zufälligen Antworten)
+// --------------------------------------------------------
 function matchFaq(userText) {
   const text = userText.toLowerCase();
   const faqs = loadFaqs();
 
   for (const f of faqs) {
+    if (!Array.isArray(f.tags)) continue;
+
     if (f.tags.some((t) => text.includes(t.toLowerCase()))) {
-      return f.answer_template;
+      if (Array.isArray(f.answers) && f.answers.length > 0) {
+        return pickRandom(f.answers);
+      }
+      if (typeof f.answer_template === "string") {
+        return f.answer_template;
+      }
     }
   }
+
   return null;
 }
 
-// Begrüßung
-function greetingIfHallo(userText) {
-  const lower = userText.toLowerCase().trim();
+// --------------------------------------------------------
+// Intent bestimmen (Termin oder nicht)
+// --------------------------------------------------------
+function intentFromText(text) {
+  const t = text.toLowerCase();
+
   if (
-    lower.startsWith("hallo") ||
-    lower.startsWith("hi") ||
-    lower.startsWith("guten tag") ||
-    lower.startsWith("servus")
-  ) {
-    return "Hallo, herzlich willkommen! Ich bin Ihr persönlicher Call- und Chat-Agent. Wie kann ich Ihnen helfen?";
-  }
-  return null;
-}
-
-// Fallback-Antwort mit Kontaktinfos
-function answerGeneral() {
-  const salon = loadSalon();
-  return (
-    "Ich bin der digitale Assistent deines Salons. Ich kann dir bei Öffnungszeiten, Preisen, Adresse, Zahlung und Terminanfragen helfen. " +
-    `Wenn du eine persönliche Frage hast, erreichst du uns direkt unter Telefon ${salon.phone} oder E-Mail ${salon.email}.`
-  );
-}
-
-// Termin speichern (lokal/temporär – auf Vercel nicht dauerhaft)
-function saveAppointment(appt) {
-  try {
-    const list = JSON.parse(fs.readFileSync(apptsPath, "utf-8"));
-    list.push({ ...appt, created_at: new Date().toISOString() });
-    fs.writeFileSync(apptsPath, JSON.stringify(list, null, 2), "utf-8");
-  } catch (_) {}
-}
-
-// Intent-Erkennung (nur ob es um Termin geht)
-function intentFromText(userText) {
-  const t = userText.toLowerCase();
-  if (
-    ["termin", "buchen", "vereinbaren", "appointment"].some((k) =>
-      t.includes(k)
-    )
+    t.includes("termin") ||
+    t.includes("buchen") ||
+    t.includes("vereinbaren") ||
+    t.includes("appointment")
   ) {
     return "appointment";
   }
+
   return "fallback";
 }
 
-// Datum extrahieren (ISO)
-function extractDateToISO(userText) {
-  const text = userText.toLowerCase();
-
-  // YYYY-MM-DD
-  const isoMatch = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
-  if (isoMatch) return isoMatch[1];
-
-  // DD.MM.YYYY
-  const dotMatch = text.match(/\b(\d{1,2})\.(\d{1,2})\.(20\d{2})\b/);
-  if (dotMatch) {
-    const day = dotMatch[1].padStart(2, "0");
-    const month = dotMatch[2].padStart(2, "0");
-    const year = dotMatch[3];
-    return `${year}-${month}-${day}`;
-  }
-
-  return null;
-}
-
-// Zeit extrahieren (HH:MM)
-function extractTimeToHHMM(userText) {
-  const text = userText.toLowerCase();
-
-  // HH:MM
-  const timeMatch = text.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
-  if (timeMatch) return timeMatch[0];
-
-  // "um 14 uhr" / "14 uhr"
-  const hourUhrMatch = text.match(/\b(?:um\s*)?([01]?\d|2[0-3])\s*uhr\b/);
-  if (hourUhrMatch) {
-    const h = hourUhrMatch[1].padStart(2, "0");
-    return `${h}:00`;
-  }
-
-  // "um 14"
-  const hourOnlyMatch = text.match(/\bum\s*([01]?\d|2[0-3])\b/);
-  if (hourOnlyMatch) {
-    const h = hourOnlyMatch[1].padStart(2, "0");
-    return `${h}:00`;
-  }
-
-  return null;
-}
-
-// Kontakt (Telefon oder E-Mail)
-function extractContact(userText) {
-  const contactMatch = userText.match(
-    /\b\S+@\S+\.\S+|\+?\d[\d\s\-\/]{6,}\b/
+// --------------------------------------------------------
+// Prüfen, ob Nachricht wie Termin-Daten aussieht
+// --------------------------------------------------------
+function looksLikeSlotUpdate(text) {
+  const t = text.toLowerCase();
+  return (
+    /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/.test(t) || // Datum
+    /\b\d{1,2}:\d{2}\b/.test(t) || // Uhrzeit
+    /\b(0\d{10,11}|\+49\d{9,12})\b/.test(t) || // Telefonnummer
+    t.includes("uhr") ||
+    t.includes("nummer") ||
+    t.includes("name ist") ||
+    t.includes("mein name")
   );
-  return contactMatch ? contactMatch[0] : null;
 }
 
-// Name aus Text holen
-function extractName(userText) {
-  // Phrasen
-  const namePhrase = userText.match(
-    /\b(ich bin|mein name ist|ich heiße|ich heisse)\s+([A-ZÄÖÜ][a-zäöüß\-]+(?:\s+[A-ZÄÖÜ][a-zäöüß\-]+)*)/i
-  );
-  if (namePhrase) return namePhrase[2].trim();
+// --------------------------------------------------------
+// Termin-Daten sammeln
+// --------------------------------------------------------
+function collectAppointmentSlots(msg, prev) {
+  const text = msg.toLowerCase();
 
-  // Kurze Eingaben wie "Tom", "Tom Müller"
-  const trimmed = userText.trim();
-  if (
-    trimmed.length > 0 &&
-    trimmed.split(/\s+/).length <= 3 &&
-    /^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß\- ]+$/.test(trimmed)
-  ) {
-    return trimmed;
+  let slots = { ...prev };
+
+  // Name
+  if (!slots.name) {
+    const m = text.match(/(ich bin|mein name ist)\s+([a-zA-Zäöüß ]+)/);
+    if (m) slots.name = m[2].trim();
   }
-  return null;
+
+  // Datum
+  if (!slots.date) {
+    const m = text.match(/\b(\d{1,2}\.\d{1,2}\.\d{2,4})\b/);
+    if (m) slots.date = m[1];
+  }
+
+  // Uhrzeit
+  if (!slots.time) {
+    const m1 = text.match(/\b(\d{1,2}:\d{2})\b/);
+    const m2 = text.match(/\b(\d{1,2})\s*uhr\b/);
+    if (m1) slots.time = m1[1];
+    if (m2) slots.time = m2[1] + ":00";
+  }
+
+  // Telefonnummer
+  if (!slots.phone) {
+    const m = text.match(/\b(0\d{10,11}|\+49\d{9,12})\b/);
+    if (m) slots.phone = m[1];
+  }
+
+  // Termin komplett?
+  const complete = slots.name && slots.date && slots.time && slots.phone;
+
+  let missing = [];
+  if (!slots.name) missing.push("deinen Namen");
+  if (!slots.date) missing.push("das Datum");
+  if (!slots.time) missing.push("die Uhrzeit");
+  if (!slots.phone) missing.push("deine Nummer");
+
+  let nextPrompt = "";
+
+  if (complete) {
+    nextPrompt = `Perfekt 👍 Ich habe alles! Soll ich den Termin jetzt abschicken?`;
+  } else if (missing.length === 1) {
+    nextPrompt = `Alles klar 😊 Ich brauche noch ${missing[0]}.`;
+  } else {
+    nextPrompt = `Um den Termin einzutragen, brauche ich noch: ${missing.join(", ")}.`;
+  }
+
+  return { slots, complete, nextPrompt };
 }
 
-// Hilfsfunktion: Sieht die Nachricht nach Termin-Details aus?
-function looksLikeSlotUpdate(userText) {
-  const text = userText.toLowerCase();
-  const trimmed = userText.trim();
-
-  const hasDate =
-    /\b(20\d{2}-\d{2}-\d{2})\b/.test(text) ||
-    /\b(\d{1,2})\.(\d{1,2})\.(20\d{2})\b/.test(text);
-
-  const hasTime =
-    /\b([01]?\d|2[0-3]):([0-5]\d)\b/.test(text) ||
-    /\b(?:um\s*)?([01]?\d|2[0-3])\s*uhr\b/.test(text);
-
-  const hasNamePhrase = /\b(ich bin|mein name ist|ich heiße|ich heisse)\b/i.test(
-    text
-  );
-
-  const isShortName =
-    trimmed.length > 0 &&
-    trimmed.split(/\s+/).length <= 3 &&
-    /^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß\- ]+$/.test(trimmed);
-
-  const hasContactPhrase =
-    /\b(telefon|handy|nummer|rufnummer|mail|email|e-mail)\b/.test(text) ||
-    /\+?\d[\d\s\-\/]{6,}/.test(userText) ||
-    /\S+@\S+\.\S+/.test(userText);
-
-  return hasDate || hasTime || hasNamePhrase || isShortName || hasContactPhrase;
-}
-
-// Slots sammeln
-function collectAppointmentSlots(userText, state = {}) {
-  let s = { ...state };
-  const text = userText.toLowerCase();
-
-  if (!s.name) {
-    const n = extractName(userText);
-    if (n) s.name = n;
-  }
-
-  if (!s.date) {
-    const d = extractDateToISO(text);
-    if (d) s.date = d;
-  }
-
-  if (!s.time) {
-    const t = extractTimeToHHMM(text);
-    if (t) s.time = t;
-  }
-
-  if (!s.contact) {
-    const c = extractContact(userText);
-    if (c) s.contact = c;
-  }
-
-  const missing = [];
-  if (!s.name) missing.push("deinen Namen");
-  if (!s.date) missing.push("das Datum (z.B. 23.12.2025)");
-  if (!s.time) missing.push("die Uhrzeit (z.B. 14 Uhr)");
-  if (!s.contact) missing.push("deine Telefonnummer oder E-Mail");
-
-  const complete = missing.length === 0;
-
-  const nextPrompt = complete
-    ? "Perfekt, ich habe Name, Datum, Uhrzeit und Kontakt. Soll ich diesen Termin jetzt an unser Team senden?"
-    : `Um die Terminanfrage abzuschließen, brauche ich noch: ${missing.join(", ")}.`;
-
-  return { slots: s, complete, nextPrompt };
+// --------------------------------------------------------
+// Fallback-Antwort
+// --------------------------------------------------------
+function answerGeneral(msg) {
+  const responses = [
+    "Gern! Was möchtest du genau wissen? 🙂",
+    "Okay! Wie kann ich dir weiterhelfen? 😊",
+    "Alles klar – stell mir gern deine Frage ✨"
+  ];
+  return pickRandom(responses);
 }
 
 module.exports = {
-  loadFaqs,
+  intentFromText,
   matchFaq,
   greetingIfHallo,
-  answerGeneral,
-  saveAppointment,
-  intentFromText,
+  looksLikeSlotUpdate,
   collectAppointmentSlots,
-  looksLikeSlotUpdate
+  answerGeneral
 };
+
 
