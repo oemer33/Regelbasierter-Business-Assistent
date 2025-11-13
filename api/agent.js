@@ -1,5 +1,9 @@
 // =======================================
-//  api/agent.js – FIX: Termin + FAQ + Hallo
+//  api/agent.js – einfache, robuste Logik
+//  - FAQs funktionieren immer
+//  - Begrüßung funktioniert immer
+//  - Termin-Daten werden gesammelt
+//  - Ja/Nein bestätigt oder bricht ab
 // =======================================
 
 const {
@@ -7,8 +11,7 @@ const {
   matchFaq,
   greetingIfHallo,
   answerGeneral,
-  collectAppointmentSlots,
-  looksLikeSlotUpdate
+  collectAppointmentSlots
 } = require("../src/agent");
 
 // Ja/Nein-Erkennung für Terminbestätigung
@@ -52,48 +55,46 @@ module.exports = async (req, res) => {
     }
 
     const { message, state } = req.body || {};
-    const msg = message || "";
-
+    const msg = (message || "").toString();
     let currentState = state || {};
     const hasSlots =
       currentState.slots && typeof currentState.slots === "object";
     const appointmentComplete = hasSlots && currentState.complete;
 
-    const greeting = greetingIfHallo(msg);
-    const faq = matchFaq(msg);
-    const slotLike = looksLikeSlotUpdate(msg);
-    const intent = intentFromText(msg); // erkennt nur "appointment" oder "fallback"
-
-    // ===================================================
-    // 1) Wenn Termin vollständig → auf JA / NEIN warten
-    // ===================================================
+    // 1) Termin ist schon komplett → auf JA / NEIN warten
     if (appointmentComplete) {
+      // a) JA → auto_send
       if (isYes(msg)) {
         return res.status(200).json({
           reply: "Alles klar, ich sende den Termin jetzt an unser Team.",
           auto_send: true,
-          state: currentState
+          state: currentState,
+          intent: "appointment_confirm_yes"
         });
       }
 
+      // b) NEIN → Termin verwerfen
       if (isNo(msg)) {
         return res.status(200).json({
           reply:
-            "Alles klar, ich sende den Termin nicht. Wenn du etwas anderes brauchst, sag einfach Bescheid!",
-          state: {}
+            "Alles klar, ich sende den Termin nicht. Wenn du einen neuen Termin möchtest, sag mir einfach Bescheid.",
+          state: {},
+          intent: "appointment_confirm_no"
         });
       }
 
-      // FAQ trotzdem erlauben, auch wenn Termin voll ist
-      if (faq) {
+      // c) FAQ funktioniert trotzdem
+      const faqAnswer = matchFaq(msg);
+      if (faqAnswer) {
         return res.status(200).json({
-          reply: faq,
+          reply: faqAnswer,
           state: currentState,
           intent: "faq"
         });
       }
 
-      // Begrüßung auch erlauben
+      // d) Begrüßung funktioniert trotzdem
+      const greeting = greetingIfHallo(msg);
       if (greeting) {
         return res.status(200).json({
           reply: greeting,
@@ -102,7 +103,7 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Sonst Erinnerung, dass wir auf Ja/Nein warten
+      // e) Erinnerung, dass wir auf JA/NEIN warten
       return res.status(200).json({
         reply: "Sag 'ja', wenn ich den Termin senden soll, oder 'nein', um abzubrechen.",
         state: currentState,
@@ -110,13 +111,31 @@ module.exports = async (req, res) => {
       });
     }
 
-    // ===================================================
-    // 2) Noch kein kompletter Termin
-    //    → zuerst prüfen: sieht Nachricht nach Termin-Details aus?
-    // ===================================================
+    // 2) Termin ist noch NICHT komplett
 
-    // a) Terminstart oder Update (Datum, Uhrzeit, Name, Kontakt etc.)
-    if (intent === "appointment" || slotLike || hasSlots) {
+    // a) Begrüßung (immer möglich)
+    const greeting = greetingIfHallo(msg);
+    if (greeting && !hasSlots && !intentFromText(msg) === "appointment") {
+      return res.status(200).json({
+        reply: greeting,
+        state: currentState,
+        intent: "greeting"
+      });
+    }
+
+    // b) FAQ (Preise, Öffnungszeiten, Adresse, Zahlung, Kontakt)
+    const faqAnswer = matchFaq(msg);
+    if (faqAnswer && !intentFromText(msg) === "appointment" && !hasSlots) {
+      return res.status(200).json({
+        reply: faqAnswer,
+        state: currentState,
+        intent: "faq"
+      });
+    }
+
+    // c) Wenn Nachricht Termin erwähnt ODER wir schon Slots haben → Slots sammeln
+    const intent = intentFromText(msg); // "appointment" oder "fallback"
+    if (intent === "appointment" || hasSlots) {
       const prevSlots = currentState.slots || {};
       const { slots, complete, nextPrompt } = collectAppointmentSlots(
         msg,
@@ -130,16 +149,16 @@ module.exports = async (req, res) => {
       });
     }
 
-    // b) FAQ (Preise, Öffnungszeiten, Adresse, Zahlung, Kontakt ...)
-    if (faq) {
+    // d) Wenn jetzt noch kein Termin, keine FAQ, keine Begrüßung → allgemeine Antwort
+    if (faqAnswer) {
+      // (falls oben wegen intent nicht gegriffen hat)
       return res.status(200).json({
-        reply: faq,
+        reply: faqAnswer,
         state: currentState,
         intent: "faq"
       });
     }
 
-    // c) Begrüßung (wenn kein Termin-Kontext)
     if (greeting) {
       return res.status(200).json({
         reply: greeting,
@@ -148,21 +167,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    // d) Wenn wir schon ein paar Slots haben, aber nichts Termin-ähnliches kommt:
-    if (hasSlots && !appointmentComplete) {
-      // Keine neuen Infos, aber Termin läuft noch → freundliche Erinnerung
-      const { slots, complete, nextPrompt } = collectAppointmentSlots(
-        "",
-        currentState.slots
-      );
-      return res.status(200).json({
-        reply: nextPrompt,
-        state: { slots, complete },
-        intent: "appointment_reminder"
-      });
-    }
-
-    // e) Alles andere → allgemeine Antwort
+    // e) Fallback
     return res.status(200).json({
       reply: answerGeneral(msg),
       state: currentState,
