@@ -1,0 +1,30 @@
+const {
+  intentFromText,
+  matchFaq,
+  answerGeneral,
+  collectAppointmentSlots
+} = require("../src/agent");
+
+module.exports = async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+  try {
+    const { message, state } = req.body || {};
+    if (!message) return res.status(400).json({ error: "message fehlt" });
+
+    const intent = intentFromText(message);
+    if (intent === "faq") {
+      const answer = matchFaq(message);
+      return res.json({ reply: answer, intent, state });
+    }
+    if (intent === "appointment") {
+      const { slots, complete, nextPrompt } = collectAppointmentSlots(message, state?.slots);
+      return res.json({ reply: nextPrompt, intent, state: { slots, complete } });
+    }
+    return res.json({ reply: answerGeneral(message), intent, state });
+  } catch (e) {
+    res.status(500).json({ error: "Agent Fehler", detail: e.message });
+  }
+};
