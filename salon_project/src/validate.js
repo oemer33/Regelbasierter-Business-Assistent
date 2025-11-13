@@ -1,0 +1,5 @@
+const fs=require("fs"); const path=require("path"); const dataPath=path.join(process.cwd(),"data","salon_data.json");
+function loadSalon(){return JSON.parse(fs.readFileSync(dataPath,"utf-8"))}
+function withinOpeningHours(dateISO){const salon=loadSalon(); const date=new Date(dateISO); if(isNaN(date)) return{ok:false,reason:"Ungültiges Datum."}; const day=["sun","mon","tue","wed","thu","fri","sat"][date.getDay()]; const oh=salon.opening_hours[day]; if(!oh||oh==="geschlossen") return{ok:false,reason:"An diesem Tag geschlossen."}; const [s,e]=oh.split("-"); const toMin=h=>{const[a,b]=h.split(":").map(Number);return a*60+b}; const mins=date.getHours()*60+date.getMinutes(); return mins>=toMin(s)&&mins<=toMin(e)?{ok:true}:{ok:false,reason:`Außerhalb der Öffnungszeiten (${oh}).`};}
+function validateAppointment(p){const req=["name","service","datetime","contact"]; for(const k of req){if(!p[k]) return{ok:false,reason:`Feld "${k}" fehlt.`};} const w=withinOpeningHours(p.datetime); if(!w.ok) return w; return{ok:true};}
+module.exports={loadSalon,withinOpeningHours,validateAppointment};
