@@ -6,10 +6,13 @@
       "wann ist geöffnet",
       "wann haben sie auf",
       "wann haben sie offen",
-      "wann macht ihr auf",
-      "wann macht ihr zu"
+      "wie lange offen"
     ],
-    "answer_template": "Unsere Öffnungszeiten entsprechen den üblichen Salonzeiten vor Ort. Konkrete Zeiten erfahren Sie am besten direkt beim Salon, da sie je nach Standort variieren können."
+    "answers": [
+      "Die Öffnungszeiten sind wie bei einem typischen Salon. Am besten kurz direkt im Salon nachfragen 😊",
+      "Die genauen Öffnungszeiten hängen vom Standort ab – ein kurzer Blick auf Google oder ein Anruf hilft am schnellsten ⏰",
+      "Übliche Salonzeiten, aber je nach Filiale verschieden. Am besten direkt vor Ort oder telefonisch checken 📞"
+    ]
   },
   {
     "tags": [
@@ -18,10 +21,13 @@
       "kosten",
       "wie viel kostet",
       "was kostet",
-      "teuer",
-      "billig"
+      "wie teuer"
     ],
-    "answer_template": "Zu den Preisen: Es gelten die Preise des jeweiligen Salons vor Ort. Viele Salons haben abgestufte Preise, je nach Haarlänge oder Aufwand. Eine genaue Auskunft bekommt man am besten direkt im Salon."
+    "answers": [
+      "Die Preise hängen von der Behandlung ab. Am besten kurz im Salon nachfragen, dann bekommst du eine genaue Info 💶",
+      "Je nach Service gibt es unterschiedliche Preise – das Team vor Ort kann dir am besten sagen, was es ungefähr kostet 🙂",
+      "Die Preisliste ist salonabhängig. Ein kurzer Anruf oder Besuch vor Ort und du bekommst eine klare Auskunft ✨"
+    ]
   },
   {
     "tags": [
@@ -32,7 +38,11 @@
       "wo finde ich sie",
       "lage"
     ],
-    "answer_template": "Der genaue Standort hängt vom jeweiligen Salon ab. Üblicherweise finden Sie Adresse und Wegbeschreibung auf der Salon-Webseite oder auf Google Maps."
+    "answers": [
+      "Die genaue Adresse hängt vom jeweiligen Salon ab. Am einfachsten über Google Maps oder die Salon-Seite nachsehen 📍",
+      "Den Standort findest du meist über Google oder direkt in der Terminbestätigung. So kommst du sicher hin 🚶‍♂️",
+      "Adresse und Wegbeschreibung stehen normalerweise auf der Salon-Webseite oder in deinem Terminhinweis 🗺️"
+    ]
   },
   {
     "tags": [
@@ -43,7 +53,11 @@
       "ec",
       "kreditkarte"
     ],
-    "answer_template": "In den meisten Salons können Sie bar und mit Karte zahlen. Details zu EC- und Kreditkarten erfragen Sie am besten kurz direkt vor Ort oder telefonisch."
+    "answers": [
+      "In den meisten Salons kannst du bar und mit Karte zahlen. Am besten kurz vor Ort nachfragen 💳",
+      "Barzahlung geht fast immer, Kartenzahlung meistens auch – genaue Info gibt dir das Team direkt im Salon 🙂",
+      "Viele Salons akzeptieren EC- und Kreditkarten. Bei Unsicherheit einfach kurz nachfragen, bevor du kommst 👍"
+    ]
   },
   {
     "tags": [
@@ -55,42 +69,52 @@
       "e mail",
       "mail"
     ],
-    "answer_template": "Für individuelle Fragen können Sie den Salon direkt kontaktieren – telefonisch oder per E-Mail. Die genauen Kontaktdaten finden Sie auf der Salon-Webseite oder in Ihrem Bestätigungsdokument."
+    "answers": [
+      "Am einfachsten ist es, direkt im Salon anzurufen oder eine kurze Mail zu schreiben – das Team hilft dir gern weiter ☎️",
+      "Für persönliche Fragen ist der direkte Kontakt am besten: kurz anrufen oder mailen und du bekommst eine klare Antwort 📧",
+      "Wenn du dir unsicher bist, lieber einmal direkt nachfragen – telefonisch oder per Mail, je nachdem was dir lieber ist 🙂"
+    ]
   },
 
-  /* 1. ORIENTIERUNG / ALLGEMEIN */
   {
     "tags": [
       "was bieten sie alles an",
       "was bieten sie an",
       "was bieten sie",
-      "was bieten sie alles",
-      "was bieten sie so",
-      "was machen sie alles",
       "leistungen",
       "angebot"
     ],
-    "answer_template": "Wir bieten verschiedene Leistungen im Beauty- und Pflegebereich an – zum Beispiel typische Salon- und Stylingservices. Vor Ort kann man Sie dazu am besten persönlich beraten."
+    "answers": [
+      "Es gibt verschiedene Beauty- und Pflegeservices – was genau, erfährst du am besten direkt im Salon ✨",
+      "Der Salon bietet unterschiedliche Leistungen rund um Styling und Pflege. Vor Ort kannst du dir alles in Ruhe erklären lassen 😊",
+      "Von typischen Basics bis zu speziellen Behandlungen ist vieles möglich – das Team vor Ort berät dich gern dazu 💇‍♀️"
+    ]
   },
   {
     "tags": [
       "muss ich vorher etwas wissen",
       "muss ich etwas wissen",
-      "muss ich vorher etwas beachten",
       "vorbereiten",
       "vorbereitung"
     ],
-    "answer_template": "Für die meisten Leistungen müssen Sie nichts Besonderes vorbereiten. Bei speziellen Behandlungen erhalten Sie vor Ort noch einmal genaue Hinweise."
+    "answers": [
+      "Für die meisten Behandlungen musst du nichts Besonderes vorbereiten. Einfach entspannt vorbeikommen 🙂",
+      "In der Regel brauchst du vorher nichts Spezielles zu beachten – das Team erklärt dir alles vor Ort.",
+      "Meist reicht es, pünktlich zu kommen. Alles Wichtige bespricht ihr dann direkt im Salon 👍"
+    ]
   },
   {
     "tags": [
-      "sind neukunden willkommen",
-      "neukunde",
       "neukunden",
-      "nehmen sie neukunden",
+      "neukunde",
+      "sind neukunden willkommen",
       "nehmen sie neue kunden"
     ],
-    "answer_template": "Ja, selbstverständlich sind Neukunden jederzeit herzlich willkommen."
+    "answers": [
+      "Ja, Neukunden sind jederzeit herzlich willkommen 🤝",
+      "Klar, neue Gesichter sind immer gern gesehen 😊",
+      "Auf jeden Fall – Neukunden sind ausdrücklich willkommen ✨"
+    ]
   },
   {
     "tags": [
@@ -99,105 +123,143 @@
       "wie läuft das ab",
       "behandlungsablauf"
     ],
-    "answer_template": "Normalerweise beginnt jede Behandlung mit einer kurzen Beratung, in der Wünsche und Möglichkeiten besprochen werden. Danach folgt die eigentliche Ausführung der Behandlung."
+    "answers": [
+      "Meist startet alles mit einer kurzen Beratung – danach beginnt direkt die Behandlung 😊",
+      "Ihr sprecht zuerst kurz über deine Wünsche, dann wird Schritt für Schritt behandelt.",
+      "Kurz besprechen, was du möchtest, und dann geht’s entspannt mit der Behandlung los ✂️"
+    ]
   },
 
-  /* 2. SERVICE / KOMFORT */
   {
     "tags": [
-      "bieten sie beratung an",
-      "geben sie beratung",
       "beratung",
-      "lassen sie sich beraten"
+      "bieten sie beratung an",
+      "geben sie beratung"
     ],
-    "answer_template": "Ja, eine persönliche Beratung gehört überall dazu. Vor jeder Behandlung können Sie Ihre Wünsche in Ruhe mit dem Team besprechen."
+    "answers": [
+      "Ja, eine persönliche Beratung gehört eigentlich immer dazu 🙂",
+      "Klar, meist gibt es vor der Behandlung eine kleine Beratung.",
+      "Ja, du kannst deine Wünsche in Ruhe besprechen, bevor es losgeht ✨"
+    ]
   },
   {
     "tags": [
       "kann ich jemanden mitbringen",
       "jemanden mitbringen",
       "freundin mitbringen",
-      "kann man jemanden mitbringen"
+      "begleitperson"
     ],
-    "answer_template": "In den meisten Fällen ist es kein Problem, jemanden mitzubringen. Am besten fragen Sie kurz vor Ort oder bei der Terminbestätigung nach."
+    "answers": [
+      "In vielen Fällen ist das kein Problem. Am besten vorher kurz Bescheid geben 😊",
+      "Begleitung ist meistens möglich, solange es nicht zu voll wird.",
+      "Eine Person mitzunehmen ist oft okay – kurz ankündigen hilft dem Team bei der Planung 👍"
+    ]
   },
   {
     "tags": [
       "gibt es wartezeiten",
-      "wartezeit",
+      "wartezeiten",
       "muss ich warten",
       "lange warten"
     ],
-    "answer_template": "Die Wartezeiten hängen vom Besucherandrang ab. Viele Kunden warten nur kurz, vor allem wenn Termine vorher vereinbart werden."
+    "answers": [
+      "Die Wartezeit hängt vom Andrang ab – mit Termin geht es meistens recht schnell ⏳",
+      "Manchmal gibt es kleine Wartezeiten, aber das Team versucht immer, pünktlich zu arbeiten 🙂",
+      "Mit Termin bist du meist zügig dran. Spontan kann es etwas dauern, je nach Tageszeit."
+    ]
   },
   {
     "tags": [
-      "bekomme ich etwas zu trinken",
-      "gibt es etwas zu trinken",
-      "wasser",
+      "trinken",
       "getränke",
-      "trinken"
+      "wasser",
+      "bekomme ich etwas zu trinken"
     ],
-    "answer_template": "Viele Salons bieten Wasser oder kleine Getränke an. Das hängt immer etwas vom jeweiligen Standort ab."
+    "answers": [
+      "Viele Salons bieten Wasser oder kleine Getränke an 🥤",
+      "Oft bekommst du zumindest Wasser angeboten – einfach freundlich nachfragen 🙂",
+      "Ein Glas Wasser oder ein kleines Getränk gibt es in vielen Salons ganz selbstverständlich."
+    ]
   },
 
-  /* 3. HYGIENE / SICHERHEIT */
   {
     "tags": [
-      "wie sieht es mit hygiene aus",
       "hygiene",
+      "hygienisch",
       "sauberkeit",
-      "hygienisch"
+      "wie sieht es mit hygiene aus"
     ],
-    "answer_template": "Es wird nach den gängigen Hygienestandards gearbeitet, wie in allen professionellen Studios. Materialien und Arbeitsplätze werden regelmäßig gereinigt und vorbereitet."
+    "answers": [
+      "Es wird nach den üblichen Hygienestandards gearbeitet – sauber und ordentlich ✨",
+      "Hygiene hat einen hohen Stellenwert, die Arbeitsplätze werden regelmäßig vorbereitet und gereinigt.",
+      "Es wird so gearbeitet, wie man es in einem professionellen Studio erwarten kann – sauber und strukturiert ✅"
+    ]
   },
   {
     "tags": [
-      "darf ich mit erkältung kommen",
-      "krank zum termin",
       "erkältung",
-      "fieber",
-      "krankheit"
+      "krank",
+      "darf ich mit erkältung kommen",
+      "fieber"
     ],
-    "answer_template": "Im Zweifel ist es immer besser, sich auszukurieren und einen späteren Zeitpunkt zu wählen. So schützen Sie sich selbst, das Team und andere Gäste."
+    "answers": [
+      "Wenn du krank bist, ist es besser, den Termin zu verschieben – für dich und andere Gäste ❤️",
+      "Mit einer Erkältung lieber zu Hause auskurieren und später kommen.",
+      "Im Zweifel: kurz absagen und einen neuen Termin ausmachen – Sicherheit geht vor 🙂"
+    ]
   },
   {
     "tags": [
-      "arbeiten sie mit einwegmaterialien",
       "einwegmaterial",
       "einweg material",
-      "hygienematerial"
+      "hygienematerial",
+      "arbeiten sie mit einwegmaterialien"
     ],
-    "answer_template": "Einweg- und Mehrwegmaterialien werden branchenüblich hygienisch eingesetzt. Wo es sinnvoll ist, kommen Einwegmaterialien zum Einsatz, anderes wird nach Vorschrift gereinigt."
+    "answers": [
+      "Einweg- und Mehrwegmaterial wird branchenüblich hygienisch eingesetzt 👍",
+      "Wo es sinnvoll ist, kommen Einwegmaterialien zum Einsatz, anderes wird fachgerecht gereinigt.",
+      "Der Umgang mit Materialien richtet sich nach den üblichen Hygienevorgaben im Salon."
+    ]
   },
 
-  /* 4. ORGANISATORISCHES */
   {
     "tags": [
-      "brauche ich einen ausweis",
-      "brauche ich ausweis",
       "ausweis",
-      "daten angeben"
+      "brauche ich einen ausweis",
+      "daten angeben",
+      "daten"
     ],
-    "answer_template": "Für normale Behandlungen benötigen Sie in der Regel keinen Ausweis. Nur bei ganz speziellen Anwendungen können zusätzliche Daten nötig sein."
+    "answers": [
+      "Für normale Behandlungen brauchst du keinen Ausweis 🙂",
+      "In der Regel reichen deine Kontaktdaten für die Terminvergabe.",
+      "Ein Ausweis ist normalerweise nicht nötig – nur bei ganz besonderen Fällen."
+    ]
   },
   {
     "tags": [
-      "kann ich meine kleidung irgendwo ablegen",
       "kleidung ablegen",
       "umziehen",
-      "garderobe"
+      "garderobe",
+      "jacke ablegen"
     ],
-    "answer_template": "Ja, üblicherweise gibt es einen Platz, an dem Sie Jacken oder persönliche Sachen ordentlich ablegen können."
+    "answers": [
+      "Ja, es gibt üblicherweise einen Platz für Jacken und persönliche Sachen 👚",
+      "Deine Sachen kannst du in der Regel an einer Garderobe oder einem festen Platz ablegen.",
+      "Es ist auf jeden Fall eine Möglichkeit da, deine Kleidung oder Tasche sicher abzustellen."
+    ]
   },
   {
     "tags": [
+      "wie viele mitarbeiter",
       "wie viele mitarbeiter arbeiten bei ihnen",
-      "wieviele mitarbeiter",
       "teamgröße",
       "wie groß ist ihr team"
     ],
-    "answer_template": "Die Teamgröße kann je nach Standort variieren. Wichtig ist: Es ist immer jemand für Sie da, der sich um Ihr Anliegen kümmert."
+    "answers": [
+      "Die Teamgröße variiert je nach Salon – aber es ist immer jemand für dich da 🙂",
+      "Mal kleiner, mal größer – wichtig ist, dass sich jemand um dich kümmert.",
+      "Die genaue Anzahl schwankt, aber du hast immer eine feste Ansprechperson."
+    ]
   },
   {
     "tags": [
@@ -206,48 +268,65 @@
       "salon schon lange",
       "erfahrung"
     ],
-    "answer_template": "Der Salon besteht seit mehreren Jahren. Genauere Infos zur Geschichte und Entwicklung erhalten Sie gern direkt vor Ort."
+    "answers": [
+      "Der Salon besteht schon seit einigen Jahren. Genaues erfährst du am besten direkt vor Ort 😊",
+      "Das Team hat Erfahrung – wie lange genau, kann man dir im Salon genauer erzählen.",
+      "Schon länger am Start – Details zur Geschichte erzählen sie dir gern persönlich."
+    ]
   },
 
-  /* 5. PRODUKTE / PFLEGE */
   {
     "tags": [
       "welche produkte verwenden sie",
       "produkte verwenden sie",
-      "produkte benutzen sie",
       "mit welchen produkten arbeiten sie"
     ],
-    "answer_template": "Es werden professionelle Produkte aus dem Beauty- und Pflegebereich verwendet, wie sie branchenüblich in Salons eingesetzt werden."
+    "answers": [
+      "Es werden professionelle Produkte aus dem Beautybereich verwendet ✨",
+      "Der Salon arbeitet mit hochwertigen Marken, wie man sie aus Studios kennt.",
+      "In der Regel kommen Salon-Produkte zum Einsatz, die auf professionelle Nutzung ausgelegt sind."
+    ]
   },
   {
     "tags": [
       "kann ich produkte kaufen",
       "produkte kaufen",
-      "produkte für zuhause",
-      "pflegeprodukte kaufen"
+      "pflegeprodukte kaufen",
+      "produkte für zuhause"
     ],
-    "answer_template": "Viele Salons bieten passende Produkte für die Pflege zu Hause an. Fragen Sie gerne im Anschluss an die Behandlung nach Empfehlungen."
+    "answers": [
+      "Viele Salons verkaufen passende Produkte für zu Hause – einfach nachfragen 🛍️",
+      "Oft kannst du die empfohlenen Produkte direkt vor Ort mitnehmen.",
+      "Wenn dir etwas gefällt, kannst du meistens auch etwas für die Pflege daheim kaufen."
+    ]
   },
   {
     "tags": [
-      "gibt es pflegeempfehlungen danach",
+      "pflegeempfehlungen",
       "pflege danach",
-      "nach der behandlung pflege",
-      "was soll ich danach machen"
+      "gibt es pflegeempfehlungen danach",
+      "nach der behandlung pflege"
     ],
-    "answer_template": "Das hängt von der jeweiligen Behandlung ab. Sie bekommen vor Ort passende Hinweise, was Sie danach beachten oder wie Sie zu Hause pflegen können."
+    "answers": [
+      "Nach der Behandlung bekommst du in der Regel Tipps für die Pflege zu Hause 🙂",
+      "Das Team erklärt dir meist kurz, was du danach beachten solltest.",
+      "Pflegehinweise sind abhängig von der Behandlung – die bekommst du am besten direkt danach."
+    ]
   },
   {
     "tags": [
-      "sind die produkte hautverträglich",
       "hautverträglich",
+      "sind die produkte hautverträglich",
       "allergie",
       "verträglichkeit"
     ],
-    "answer_template": "Die verwendeten Produkte entsprechen den branchenüblichen Standards. Bei bekannten Allergien oder Unverträglichkeiten informieren Sie bitte vor Beginn der Behandlung das Team."
+    "answers": [
+      "Die Produkte entsprechen den üblichen Standards. Bei Allergien am besten vorher Bescheid sagen 🌿",
+      "Wer empfindliche Haut hat, sollte das kurz erwähnen – dann kann darauf eingegangen werden.",
+      "Die Produkte sind salonüblich. Wenn du unsicher bist, sprich das Team einfach darauf an 🙂"
+    ]
   },
 
-  /* 6. KOMMUNIKATION / SPRACHEN */
   {
     "tags": [
       "sprechen sie andere sprachen",
@@ -257,7 +336,11 @@
       "arabisch",
       "sprache"
     ],
-    "answer_template": "Viele Salons können sich in mehreren Sprachen verständigen. Am besten fragen Sie kurz vor Ort nach, welche Sprachen das Team abdeckt."
+    "answers": [
+      "Viele Salons sprechen zusätzlich Englisch oder noch eine andere Sprache – einfach kurz nachfragen 🙂",
+      "Es kann gut sein, dass jemand im Team mehrere Sprachen spricht.",
+      "Wenn dir eine Sprache wichtig ist, kurz beim Salon nachfragen – meist findet sich eine Lösung 🌍"
+    ]
   },
   {
     "tags": [
@@ -266,10 +349,13 @@
       "später fragen",
       "noch fragen"
     ],
-    "answer_template": "Natürlich. Sie können Fragen jederzeit später stellen – persönlich im Salon, telefonisch oder per Nachricht, je nachdem was der Salon anbietet."
+    "answers": [
+      "Klar, Fragen kannst du auch später stellen – das Team hilft dir gern weiter 🙂",
+      "Auch nach dem Termin kannst du dich bei Unsicherheit noch melden.",
+      "Wenn dir später noch etwas einfällt, einfach kurz beim Salon nachhaken."
+    ]
   },
 
-  /* 7. BESONDERHEITEN / ALLGEMEINES */
   {
     "tags": [
       "machen sie auch männer",
@@ -279,7 +365,11 @@
       "nur frauen",
       "kinder auch"
     ],
-    "answer_template": "Ja, die meisten Dienstleistungen sind für Frauen, Männer und oft auch für Kinder geeignet. Details dazu erfahren Sie direkt bei der Terminabsprache."
+    "answers": [
+      "Die meisten Leistungen sind für Frauen, Männer und oft auch Kinder geeignet 👨‍👩‍👧",
+      "In vielen Salons werden alle Geschlechter und Altersgruppen behandelt.",
+      "Ob Damen, Herren oder Kinder – meist ist für alle etwas dabei."
+    ]
   },
   {
     "tags": [
@@ -288,39 +378,55 @@
       "events",
       "hochzeit",
       "feiern",
-      "machen sie auch spezielle anlässe"
+      "anlass"
     ],
-    "answer_template": "Viele Salons bieten spezielle Services für besondere Anlässe an, zum Beispiel Events, Feiern oder Hochzeiten. Fragen Sie dafür am besten direkt nach einem passenden Angebot."
+    "answers": [
+      "Für besondere Anlässe wie Feiern oder Events gibt es oft spezielle Angebote 🎉",
+      "Hochzeiten, Shootings oder Events – viele Salons bieten dafür Extra-Services.",
+      "Am besten direkt nach einem Anlass-Service fragen, da gibt es häufig spezielle Pakete."
+    ]
   },
   {
     "tags": [
-      "ist der salon barrierefrei",
       "barrierefrei",
+      "ist der salon barrierefrei",
       "rollstuhl",
       "zugänglich"
     ],
-    "answer_template": "Das hängt immer vom konkreten Standort ab. Viele Salons sind gut zugänglich. Am sichersten ist es, kurz telefonisch nachzufragen, wie der Zugang vor Ort aussieht."
+    "answers": [
+      "Das hängt vom Standort ab. Am besten kurz telefonisch nachfragen, wie der Zugang ist ♿",
+      "Viele Salons sind gut zugänglich, aber am sichersten ist eine kurze Nachfrage.",
+      "Wenn Barrierefreiheit wichtig ist, lieber vorher einmal direkt beim Salon nachfragen."
+    ]
   },
   {
     "tags": [
-      "sind haustiere erlaubt",
       "haustiere erlaubt",
+      "sind haustiere erlaubt",
       "darf ich hund mitbringen",
-      "hund mitnehmen"
+      "hund mitnehmen",
+      "tier mitnehmen"
     ],
-    "answer_template": "Ob Haustiere erlaubt sind, entscheidet jeder Salon individuell. In vielen Fällen geht es problemlos, aber ein kurzer Hinweis im Vorfeld ist immer hilfreich."
+    "answers": [
+      "Ob Haustiere erlaubt sind, entscheidet der Salon selbst. Oft geht es, wenn das Tier ruhig ist 🐶",
+      "Am besten vorher kurz fragen, ob du deinen Vierbeiner mitbringen darfst.",
+      "Viele Salons sind entspannt mit Haustieren, wenn sie niemanden stören."
+    ]
   },
   {
     "tags": [
+      "handy",
       "kann ich während der behandlung auf mein handy",
       "handy benutzen",
-      "handy während",
       "telefon während behandlung"
     ],
-    "answer_template": "In den meisten Fällen ist es in Ordnung, das Handy zwischendurch zu benutzen, solange es die Behandlung nicht stört. Im Zweifel einfach kurz mit dem Team abstimmen."
+    "answers": [
+      "Meist kannst du dein Handy zwischendurch nutzen, solange es die Behandlung nicht stört 📱",
+      "Ein bisschen Handy geht meistens klar – einfach auf Lautlos stellen.",
+      "Solange du die Arbeit des Teams nicht behinderst, ist Handybenutzung in vielen Salons okay."
+    ]
   },
 
-  /* 8. KUNDENERFAHRUNG */
   {
     "tags": [
       "wie zufrieden sind ihre kunden",
@@ -328,25 +434,37 @@
       "kundenbewertung",
       "zufriedenheit"
     ],
-    "answer_template": "Die meisten Kunden sind sehr zufrieden und kommen regelmäßig wieder. Für einen Eindruck können Sie sich auch Bewertungen oder Fotos des Salons anschauen."
+    "answers": [
+      "Viele Kunden sind sehr zufrieden und kommen regelmäßig wieder 😊",
+      "Die meisten Gäste sind happy – am besten schaust du dir Bewertungen oder Bilder an.",
+      "Gerade Stammkunden zeigen, dass der Salon gut ankommt ✨"
+    ]
   },
   {
     "tags": [
       "kann ich bilder zeigen",
       "bilder zeigen",
       "foto zeigen",
-      "kann ich ein bild zeigen"
+      "bild zeigen"
     ],
-    "answer_template": "Ja, Bilder sind immer eine gute Orientierungshilfe. Bringen Sie gern Fotos mit, wie Sie es sich vorstellen."
+    "answers": [
+      "Ja, Bilder sind super als Orientierung. Bring einfach ein Beispiel mit 📸",
+      "Ein Foto hilft mega, um deinen Wunsch zu verstehen.",
+      "Sehr gern – Bilder machen es für alle einfacher, den Look zu treffen."
+    ]
   },
   {
     "tags": [
       "kann ich vorher wünsche sagen",
       "wünsche sagen",
       "wunsch äußern",
-      "kann ich wünsche äußern"
+      "wünsche äußern"
     ],
-    "answer_template": "Natürlich, Ihre Wünsche sind jederzeit willkommen. Sprechen Sie vor Beginn der Behandlung einfach an, was Ihnen wichtig ist."
+    "answers": [
+      "Unbedingt – deine Wünsche sind wichtig und sollten vor der Behandlung besprochen werden 🙂",
+      "Sag ruhig offen, was du dir vorstellst. Dafür ist die Beratung da.",
+      "Je klarer du deine Wünsche sagst, desto besser kann das Team darauf eingehen."
+    ]
   },
   {
     "tags": [
@@ -355,6 +473,11 @@
       "was passt zu mir",
       "beratung was mir steht"
     ],
-    "answer_template": "Ja, in der Regel gibt es eine kurze Beratung, was zu Ihrem Typ und Ihren Wünschen passt. Das Team hilft Ihnen gern, eine passende Entscheidung zu treffen."
+    "answers": [
+      "Ja, normalerweise bekommst du eine Empfehlung, was gut zu dir passt ✨",
+      "Das Team schaut sich Haar, Typ und Wünsche an und macht dir dann Vorschläge.",
+      "Wenn du unsicher bist, frag einfach nach einer ehrlichen Empfehlung – das ist ganz normal 🙂"
+    ]
   }
 ]
+
