@@ -1,3 +1,7 @@
+// ===============================
+//   src/validate.js (1:1 Ersatz)
+// ===============================
+
 const fs = require("fs");
 const path = require("path");
 
@@ -13,29 +17,39 @@ function withinOpeningHours(dateISO) {
   const date = new Date(dateISO);
   if (isNaN(date)) return { ok: false, reason: "Ungültiges Datum." };
 
-  const day = ["sun","mon","tue","wed","thu","fri","sat"][date.getDay()];
+  const day = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][date.getDay()];
   const oh = salon.opening_hours[day];
-  if (!oh || oh === "geschlossen") return { ok: false, reason: "An diesem Tag geschlossen." };
+  if (!oh || oh === "geschlossen")
+    return { ok: false, reason: "An diesem Tag geschlossen." };
 
   const [start, end] = oh.split("-");
-  const toMin = (hhmm) => {
-    const [h, m] = hhmm.split(":").map(Number);
+  const toMin = (v) => {
+    const [h, m] = v.split(":").map(Number);
     return h * 60 + m;
   };
-  const mins = date.getHours() * 60 + date.getMinutes();
-  const ok = mins >= toMin(start) && mins <= toMin(end);
-  return ok ? { ok: true } : { ok: false, reason: `Außerhalb der Öffnungszeiten (${oh}).` };
+
+  const cur = date.getHours() * 60 + date.getMinutes();
+
+  if (cur < toMin(start) || cur > toMin(end))
+    return {
+      ok: false,
+      reason: `Außerhalb der Öffnungszeiten (${oh}).`
+    };
+
+  return { ok: true };
 }
 
+// NUR Name + datetime
 function validateAppointment(payload) {
-  const required = ["name", "service", "datetime", "contact"];
-  for (const k of required) {
-    if (!payload[k] || String(payload[k]).trim() === "") {
-      return { ok: false, reason: `Feld "${k}" fehlt.` };
-    }
-  }
+  if (!payload.name)
+    return { ok: false, reason: "Name fehlt." };
+
+  if (!payload.datetime)
+    return { ok: false, reason: "Datum und Uhrzeit fehlen." };
+
   const win = withinOpeningHours(payload.datetime);
   if (!win.ok) return win;
+
   return { ok: true };
 }
 
