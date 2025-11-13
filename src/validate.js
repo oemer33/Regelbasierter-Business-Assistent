@@ -39,7 +39,7 @@ function withinOpeningHours(dateISO) {
   return { ok: true };
 }
 
-// NUR Name + datetime
+// NUR Name + datetime sind Pflicht
 function validateAppointment(payload) {
   if (!payload.name)
     return { ok: false, reason: "Name fehlt." };
