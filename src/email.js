@@ -1,3 +1,6 @@
+// ===============================
+//   src/email.js (fester Empfänger + Logging)
+// ===============================
 const nodemailer = require("nodemailer");
 
 function makeTransport(env) {
@@ -5,25 +8,43 @@ function makeTransport(env) {
     host: env.SMTP_HOST,
     port: Number(env.SMTP_PORT || 587),
     secure: String(env.SMTP_SECURE || "false") === "true",
-    auth: { user: env.SMTP_USER, pass: env.SMTP_PASS }
+    auth: {
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS
+    }
   });
 }
 
 async function sendAppointmentMail(transport, env, appt) {
-  const html = `
+  // Empfänger: erst TEAM_INBOX, sonst SMTP_USER, sonst feste Adresse
+  const recipient =
+    env.TEAM_INBOX ||
+    env.SMTP_USER ||
+    "otosun750@icloud.com";
+
+  const textBody =
+    `Neue Terminanfrage:\n` +
+    `Name: ${appt.name}\n` +
+    `Wunschzeit: ${appt.datetime}\n` +
+    `Notizen: ${appt.notes || "-"}`;
+
+  const htmlBody = `
     <h2>Neue Terminanfrage</h2>
     <p><b>Name:</b> ${appt.name}</p>
-    <p><b>Service:</b> ${appt.service}</p>
     <p><b>Wunschzeit:</b> ${appt.datetime}</p>
-    <p><b>Kontakt:</b> ${appt.contact}</p>
-    <p><b>Anmerkungen:</b> ${appt.notes || "-"}</p>
+    <p><b>Notizen:</b> ${appt.notes || "-"}</p>
   `;
-  await transport.sendMail({
-    from: env.FROM_ADDRESS || env.SMTP_USER,
-    to: env.TEAM_INBOX,
-    subject: `Terminanfrage: ${appt.name} – ${appt.service} – ${appt.datetime}`,
-    html
+
+  const info = await transport.sendMail({
+    from: env.FROM_ADDRESS || env.SMTP_USER || "otosun750@icloud.com",
+    to: recipient,
+    subject: `Terminanfrage: ${appt.name} – ${appt.datetime}`,
+    text: textBody,
+    html: htmlBody
   });
+
+  // In den Vercel-Logs siehst du dann, ob iCloud die Mail akzeptiert hat
+  console.log("Mail gesendet, Server-Antwort:", info);
 }
 
 module.exports = { makeTransport, sendAppointmentMail };
