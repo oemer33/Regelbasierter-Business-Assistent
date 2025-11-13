@@ -1,6 +1,6 @@
 // =======================================
-// src/agent.js – mit zufälligen Antworten,
-// lockerer Begrüßung & FAQ aus JSON
+// src/agent.js – zufällige Antworten,
+// lockere Begrüßung & einfache Termin-Logik
 // =======================================
 
 const fs = require("fs");
@@ -49,7 +49,7 @@ function greetingIfHallo(userText) {
 }
 
 // --------------------------------------------------------
-// FAQ-Erkennung (mit 3 zufälligen Antworten)
+// FAQ-Erkennung (mit zufälliger Antwort)
 // --------------------------------------------------------
 function matchFaq(userText) {
   const text = userText.toLowerCase();
@@ -91,84 +91,96 @@ function intentFromText(text) {
 
 // --------------------------------------------------------
 // Prüfen, ob Nachricht wie Termin-Daten aussieht
+// (Datum, Uhrzeit, Nummer, Name etc.)
 // --------------------------------------------------------
 function looksLikeSlotUpdate(text) {
   const t = text.toLowerCase();
-  return (
-    /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/.test(t) || // Datum
-    /\b\d{1,2}:\d{2}\b/.test(t) || // Uhrzeit
-    /\b(0\d{10,11}|\+49\d{9,12})\b/.test(t) || // Telefonnummer
-    t.includes("uhr") ||
-    t.includes("nummer") ||
-    t.includes("name ist") ||
-    t.includes("mein name")
-  );
+
+  const hasDate = /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/.test(t);
+  const hasTime = /\b\d{1,2}:\d{2}\b/.test(t) || /\b\d{1,2}\s*uhr\b/.test(t);
+  const hasPhone = /\d{6,}/.test(t); // 👉 mind. 6 Ziffern hintereinander
+  const hasNamePhrase = t.includes("mein name ist") || t.includes("ich bin ");
+
+  return hasDate || hasTime || hasPhone || hasNamePhrase;
 }
 
 // --------------------------------------------------------
 // Termin-Daten sammeln
+// Slots: name, date, time, phone
 // --------------------------------------------------------
 function collectAppointmentSlots(msg, prev) {
   const text = msg.toLowerCase();
-
   let slots = { ...prev };
 
   // Name
   if (!slots.name) {
     const m = text.match(/(ich bin|mein name ist)\s+([a-zA-Zäöüß ]+)/);
-    if (m) slots.name = m[2].trim();
+    if (m) {
+      slots.name = m[2].trim();
+    } else {
+      // falls nur Name geschrieben wird, z.B. "Tom"
+      const single = msg.trim();
+      if (
+        single.length > 1 &&
+        single.split(/\s+/).length <= 3 &&
+        /^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß ]+$/.test(single)
+      ) {
+        slots.name = single;
+      }
+    }
   }
 
-  // Datum
+  // Datum (z.B. 23.12.2025)
   if (!slots.date) {
     const m = text.match(/\b(\d{1,2}\.\d{1,2}\.\d{2,4})\b/);
     if (m) slots.date = m[1];
   }
 
-  // Uhrzeit
+  // Uhrzeit (z.B. 14:00 oder "14 uhr")
   if (!slots.time) {
     const m1 = text.match(/\b(\d{1,2}:\d{2})\b/);
     const m2 = text.match(/\b(\d{1,2})\s*uhr\b/);
     if (m1) slots.time = m1[1];
-    if (m2) slots.time = m2[1] + ":00";
+    else if (m2) slots.time = m2[1] + ":00";
   }
 
-  // Telefonnummer
+  // Telefonnummer – ab jetzt: jede Folge von mindestens 6 Ziffern
   if (!slots.phone) {
-    const m = text.match(/\b(0\d{10,11}|\+49\d{9,12})\b/);
-    if (m) slots.phone = m[1];
+    const m = text.match(/(\d{6,})/);
+    if (m) {
+      slots.phone = m[1];
+    }
   }
 
-  // Termin komplett?
-  const complete = slots.name && slots.date && slots.time && slots.phone;
+  // komplett?
+  const complete = !!(slots.name && slots.date && slots.time && slots.phone);
 
-  let missing = [];
+  const missing = [];
   if (!slots.name) missing.push("deinen Namen");
   if (!slots.date) missing.push("das Datum");
   if (!slots.time) missing.push("die Uhrzeit");
-  if (!slots.phone) missing.push("deine Nummer");
+  if (!slots.phone) missing.push("deine Telefonnummer");
 
   let nextPrompt = "";
-
   if (complete) {
-    nextPrompt = `Perfekt 👍 Ich habe alles! Soll ich den Termin jetzt abschicken?`;
+    nextPrompt = "Perfekt 👍 Ich habe alles. Soll ich den Termin jetzt an dein Salon-Team schicken?";
   } else if (missing.length === 1) {
     nextPrompt = `Alles klar 😊 Ich brauche noch ${missing[0]}.`;
   } else {
-    nextPrompt = `Um den Termin einzutragen, brauche ich noch: ${missing.join(", ")}.`;
+    nextPrompt = `Damit ich den Termin eintragen kann, brauche ich noch: ${missing.join(", ")}.`;
   }
 
   return { slots, complete, nextPrompt };
 }
 
 // --------------------------------------------------------
-// Fallback-Antwort
+// Fallback-Antwort (wenn nichts passt)
 // --------------------------------------------------------
 function answerGeneral(msg) {
   const responses = [
-    "Gern! Was möchtest du genau wissen? 🙂",
-    "Okay! Wie kann ich dir weiterhelfen? 😊",
-    "Alles klar – stell mir gern deine Frage ✨"
+    "Gern 🙂 Was möchtest du genau wissen?",
+    "Okay 😊 Wie kann ich dir helfen?",
+    "Alles klar ✨ Stell mir einfach deine Frage."
   ];
   return pickRandom(responses);
 }
@@ -181,5 +193,3 @@ module.exports = {
   collectAppointmentSlots,
   answerGeneral
 };
-
-
