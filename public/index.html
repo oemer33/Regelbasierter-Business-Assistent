@@ -3,50 +3,87 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dein Salonname – Call & Chat Agent</title>
+  <title>Salon Call & Chat Agent</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <header>
-    <h1 id="company_name">Dein Salonname</h1>
-    <p class="sub">Sprach- & Chat-Call-Agent · Fragen & Terminanfrage</p>
-  </header>
-
-  <main>
-    <section class="mic-panel">
-      <div class="mic-left">
-        <button id="mic_btn" aria-label="Mikrofon um zu sprechen">🎤 Sprechen</button>
-        <span id="mic_status" class="muted">bereit</span>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">SC</div>
+        <div class="brand-text">
+          <h1 id="company_name">Ihr Salon</h1>
+          <p>Digitaler Call- & Chat-Agent für Beratung und Terminanfragen</p>
+        </div>
       </div>
-      <div class="mic-right muted">
-        Du kannst auch unten deine Nachricht tippen und auf <b>Senden</b> klicken.
+      <div class="brand-contact">
+        <span id="address"></span>
+        <a id="phone"></a>
+        <a id="email"></a>
       </div>
-    </section>
+    </header>
 
-    <section class="transcript" id="transcript"></section>
+    <main class="main-card">
+      <section class="hero">
+        <div class="hero-text">
+          <h2>Ihr persönlicher Salon-Assistent</h2>
+          <p>Stellen Sie Fragen, lassen Sie sich beraten oder geben Sie eine Terminanfrage auf – per Sprache oder Text.</p>
+        </div>
+        <div class="hero-actions">
+          <button id="mic_btn" aria-label="Mikrofon aktivieren">
+            <span class="mic-icon">🎙️</span>
+            <span class="mic-label">Sprechen</span>
+          </button>
+          <span id="mic_status" class="muted">bereit</span>
+        </div>
+      </section>
 
-    <section class="input-row">
-      <input id="text_input" type="text" placeholder="Nachricht eingeben und Enter drücken oder auf Senden klicken …" />
-      <button id="send_btn">Senden</button>
-    </section>
+      <section class="chat">
+        <div id="transcript" class="transcript"></div>
 
-    <section class="cta">
-      <button id="confirm_btn" class="primary" disabled>Terminanfrage absenden</button>
-      <small id="confirm_hint" class="muted">Wird aktiv, wenn Name, Datum, Uhrzeit und Kontakt vorhanden sind.</small>
-    </section>
+        <div class="input-row">
+          <input
+            id="text_input"
+            type="text"
+            placeholder="Frage stellen oder Termindaten eingeben …"
+          />
+          <button id="send_btn">Senden</button>
+        </div>
 
-    <section class="legal">
-      <details>
-        <summary>Datenschutzhinweis</summary>
-        <p>Audio wird nur lokal verarbeitet (Browser Web Speech API). Es werden keine Sprachdaten an den Server gesendet. Bei einer Terminanfrage werden Name, Datum, Uhrzeit und Kontakt zum Zweck der Terminvergabe an unser Team gemailt.</p>
-      </details>
-    </section>
-  </main>
+        <div class="cta-row">
+          <button id="confirm_btn" class="primary" disabled>
+            Terminanfrage absenden
+          </button>
+          <small id="confirm_hint" class="muted">
+            Wird aktiv, sobald Name, Datum, Uhrzeit und Kontakt vorliegen.
+          </small>
+        </div>
+      </section>
 
-  <footer>
-    <span id="address"></span> · <a id="phone"></a> · <a id="email"></a>
-  </footer>
+      <section class="info">
+        <details>
+          <summary>Hinweis zum Assistenten</summary>
+          <p>
+            Der Assistent beantwortet allgemeine Fragen zu Leistungen, Komfort,
+            Hygiene, Organisation, Produkten und Terminen. Für persönliche
+            Detailfragen oder verbindliche Auskünfte hilft das Team im Salon
+            direkt weiter.
+          </p>
+          <p>
+            Sprachnachrichten werden nur im Browser verarbeitet. Bei einer
+            Terminanfrage werden Name, gewünschte Zeit und Kontaktdaten an das
+            Team gesendet.
+          </p>
+        </details>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Salon Call Agent · Powered by Ihrem Team</span>
+    </footer>
+  </div>
 
   <script src="/app.js" type="module"></script>
 </body>
 </html>
+
