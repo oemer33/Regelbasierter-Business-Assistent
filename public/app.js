@@ -1,7 +1,5 @@
 // ===============================
-//   public/app.js (kompletter Ersatz)
-//   - Sprach + Text
-//   - Auto-Senden bei "ja" (auto_send)
+//   public/app.js – UI + kurzer Chatverlauf
 // ===============================
 
 const $ = (s) => document.querySelector(s);
@@ -37,12 +35,10 @@ const hasTTS =
 
 const synth = hasTTS ? window.speechSynthesis : null;
 let voices = [];
-let ttsReady = false;
 
 if (hasTTS) {
   const loadVoices = () => {
     voices = synth.getVoices();
-    ttsReady = voices && voices.length > 0;
   };
   loadVoices();
   window.speechSynthesis.onvoiceschanged = loadVoices;
@@ -90,6 +86,12 @@ function addMsg(role, text) {
     role === "user" ? "Du" : "Agent"
   }</span><span>${text}</span>`;
   transcript.appendChild(div);
+
+  // NUR die letzten 4 Nachrichten behalten
+  while (transcript.children.length > 4) {
+    transcript.removeChild(transcript.firstChild);
+  }
+
   transcript.scrollTop = transcript.scrollHeight;
 }
 
@@ -133,14 +135,15 @@ async function sendAppointment() {
 
 async function sendToAgent(text) {
   if (!text || !text.trim()) return;
-  addMsg("user", text.trim());
+  const clean = text.trim();
+  addMsg("user", clean);
   textInput.value = "";
 
   try {
     const r = await fetch("/api/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, state: agentState })
+      body: JSON.stringify({ message: clean, state: agentState })
     });
     const data = await r.json();
     agentState = data.state || agentState;
@@ -148,13 +151,11 @@ async function sendToAgent(text) {
     addMsg("agent", data.reply);
     speak(data.reply);
 
-    // Button aktivieren/deaktivieren
     confirmBtn.disabled = !agentState?.complete;
     confirmHint.textContent = agentState?.complete
-      ? "Alle Angaben vorhanden (Name, Datum, Uhrzeit, Kontakt). Du kannst 'Ja' sagen oder den Button klicken."
+      ? "Alle Angaben vorhanden (Name, Datum, Uhrzeit, Kontakt). Du kannst 'Ja' sagen oder den Button nutzen."
       : "Wird aktiv, wenn Name, Datum, Uhrzeit und Kontakt vorhanden sind.";
 
-    // 🔁 Auto-Senden, wenn der Server auto_send=true gesetzt hat
     if (data.auto_send) {
       await sendAppointment();
     }
