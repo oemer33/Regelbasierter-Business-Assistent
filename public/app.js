@@ -1,5 +1,7 @@
 // ===============================
 //   public/app.js (kompletter Ersatz)
+//   - Sprach- und Texteingabe
+//   - Termin: name, date, time, contact
 // ===============================
 
 const $ = (s) => document.querySelector(s);
@@ -8,13 +10,13 @@ const micBtn = $("#mic_btn");
 const micStatus = $("#mic_status");
 const confirmBtn = $("#confirm_btn");
 const confirmHint = $("#confirm_hint");
+const textInput = $("#text_input");
+const sendBtn = $("#send_btn");
 
 let agentState = { slots: {}, complete: false };
 let speaking = false;
 
-// -----------------------------
-//  Stammdaten laden
-// -----------------------------
+// Stammdaten laden
 fetch("/api/salon")
   .then((r) => r.json())
   .then((salon) => {
@@ -25,13 +27,9 @@ fetch("/api/salon")
     $("#email").textContent = salon.email;
     $("#email").href = `mailto:${salon.email}`;
   })
-  .catch(() => {
-    // Falls API nicht geht, einfach still ignorieren
-  });
+  .catch(() => {});
 
-// -----------------------------
-//  Sprachausgabe (Text-to-Speech)
-// -----------------------------
+// Text-to-Speech
 const hasTTS =
   typeof window !== "undefined" &&
   "speechSynthesis" in window &&
@@ -42,67 +40,42 @@ let voices = [];
 let ttsReady = false;
 
 if (hasTTS) {
-  // Manche Browser laden Stimmen asynchron
   const loadVoices = () => {
     voices = synth.getVoices();
     ttsReady = voices && voices.length > 0;
   };
-
   loadVoices();
-  if (typeof window !== "undefined") {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-  }
-} else {
-  console.warn("Dieser Browser unterstützt keine Sprachausgabe (speechSynthesis).");
+  window.speechSynthesis.onvoiceschanged = loadVoices;
 }
 
 function getGermanVoice() {
   if (!voices || voices.length === 0) return null;
-  // Versuche zuerst eine deutsche Stimme
   const de = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("de"));
   return de || voices[0];
 }
 
 function speak(text) {
-  if (!hasTTS) {
-    // Kein TTS → einfach nichts sagen
-    return;
-  }
-
+  if (!hasTTS) return;
   try {
     if (!text || typeof text !== "string") return;
-
-    // Laufende Ausgabe abbrechen
-    if (synth.speaking) {
-      synth.cancel();
-    }
+    if (synth.speaking) synth.cancel();
 
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "de-DE";
+    const voice = getGermanVoice();
+    if (voice) utter.voice = voice;
     utter.rate = 1.0;
     utter.pitch = 1.0;
 
-    const voice = getGermanVoice();
-    if (voice) utter.voice = voice;
-
     speaking = true;
-    utter.onend = () => {
-      speaking = false;
-    };
-    utter.onerror = (e) => {
-      speaking = false;
-      console.error("Fehler bei TTS:", e);
-    };
+    utter.onend = () => { speaking = false; };
+    utter.onerror = () => { speaking = false; };
 
     synth.speak(utter);
-  } catch (e) {
-    console.error("TTS-Ausnahme:", e);
-  }
+  } catch (_) {}
 }
 
-// -----------------------------
-//  Spracherkennung (SpeechRecognition)
-// -----------------------------
+// SpeechRecognition
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -117,7 +90,9 @@ function addMsg(role, text) {
 }
 
 async function sendToAgent(text) {
-  addMsg("user", text);
+  if (!text || !text.trim()) return;
+  addMsg("user", text.trim());
+  textInput.value = "";
 
   try {
     const r = await fetch("/api/agent", {
@@ -125,7 +100,6 @@ async function sendToAgent(text) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: text, state: agentState })
     });
-
     const data = await r.json();
     agentState = data.state || agentState;
 
@@ -134,11 +108,10 @@ async function sendToAgent(text) {
 
     confirmBtn.disabled = !agentState?.complete;
     confirmHint.textContent = agentState?.complete
-      ? "Alle Angaben vorhanden. Jetzt Termin anfragen!"
-      : "Wird aktiv, wenn alle Angaben vorhanden sind.";
+      ? "Alle Angaben vorhanden (Name, Datum, Uhrzeit, Kontakt). Jetzt Termin anfragen!"
+      : "Wird aktiv, wenn Name, Datum, Uhrzeit und Kontakt vorhanden sind.";
   } catch (e) {
     addMsg("agent", "Es gab ein Verbindungsproblem mit dem Server.");
-    console.error("Fehler beim /api/agent-Call:", e);
   }
 }
 
@@ -165,7 +138,6 @@ function startRecognition() {
   };
   rec.onerror = (e) => {
     micStatus.textContent = "Fehler: " + e.error;
-    console.error("SpeechRecognition Fehler:", e);
   };
   rec.onresult = (evt) => {
     const text = evt.results[0][0].transcript;
@@ -175,22 +147,31 @@ function startRecognition() {
   rec.start();
 }
 
-// Klick auf „Sprechen“
-// (Startet sowohl das Mikro als auch – durch den Klick – Audio-Rechte für TTS)
+// Mic-Button
 micBtn.addEventListener("click", () => {
-  // Falls gerade gesprochen wird → abbrechen
   if (hasTTS && speaking) {
-    try {
-      synth.cancel();
-      speaking = false;
-    } catch (_) {}
+    synth.cancel();
+    speaking = false;
   }
   startRecognition();
 });
 
-// -----------------------------
-//  Termin absenden
-// -----------------------------
+// Text-Chat: Button
+sendBtn.addEventListener("click", () => {
+  const text = textInput.value;
+  sendToAgent(text);
+});
+
+// Text-Chat: Enter-Taste
+textInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const text = textInput.value;
+    sendToAgent(text);
+  }
+});
+
+// Termin absenden
 confirmBtn.addEventListener("click", async () => {
   const s = agentState.slots || {};
   const datetime = s.date && s.time ? `${s.date}T${s.time}` : null;
@@ -198,6 +179,7 @@ confirmBtn.addEventListener("click", async () => {
   const payload = {
     name: s.name,
     datetime,
+    contact: s.contact,
     notes: s.notes
   };
 
@@ -217,14 +199,12 @@ confirmBtn.addEventListener("click", async () => {
       speak(msg);
       confirmBtn.disabled = true;
     } else {
-      const errMsg = "Konnte nicht senden: " + (data.error || "Unbekannter Fehler");
+      const errMsg =
+        "Konnte nicht senden: " + (data.error || "Unbekannter Fehler");
       addMsg("agent", errMsg);
       speak("Leider konnte ich die Anfrage nicht senden.");
-      console.error("Fehler bei /api/appointment:", data);
     }
   } catch (e) {
     addMsg("agent", "Konnte nicht senden: Netzwerkfehler.");
-    console.error("Netzwerkfehler bei /api/appointment:", e);
   }
 });
-
