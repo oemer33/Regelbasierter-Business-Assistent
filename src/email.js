@@ -1,5 +1,5 @@
 // ===============================
-//   src/email.js (fester Empfänger + Logging)
+//   src/email.js (kompletter Ersatz)
 // ===============================
 const nodemailer = require("nodemailer");
 
@@ -16,7 +16,6 @@ function makeTransport(env) {
 }
 
 async function sendAppointmentMail(transport, env, appt) {
-  // Empfänger: erst TEAM_INBOX, sonst SMTP_USER, sonst feste Adresse
   const recipient =
     env.TEAM_INBOX ||
     env.SMTP_USER ||
@@ -26,14 +25,16 @@ async function sendAppointmentMail(transport, env, appt) {
     `Neue Terminanfrage:\n` +
     `Name: ${appt.name}\n` +
     `Wunschzeit: ${appt.datetime}\n` +
+    `Kontakt: ${appt.contact || "-"}\n` +
     `Notizen: ${appt.notes || "-"}`;
 
   const htmlBody = `
     <h2>Neue Terminanfrage</h2>
     <p><b>Name:</b> ${appt.name}</p>
     <p><b>Wunschzeit:</b> ${appt.datetime}</p>
+    <p><b>Kontakt:</b> ${appt.contact || "-"}</p>
     <p><b>Notizen:</b> ${appt.notes || "-"}</p>
-  `;
+ `;
 
   const info = await transport.sendMail({
     from: env.FROM_ADDRESS || env.SMTP_USER || "otosun750@icloud.com",
@@ -43,7 +44,6 @@ async function sendAppointmentMail(transport, env, appt) {
     html: htmlBody
   });
 
-  // In den Vercel-Logs siehst du dann, ob iCloud die Mail akzeptiert hat
   console.log("Mail gesendet, Server-Antwort:", info);
 }
 
