@@ -1,5 +1,6 @@
 // ===============================
 //   api/appointment.js (kompletter Ersatz)
+//   - Antworttext für Chat angepasst
 // ===============================
 
 const { validateAppointment } = require("../src/validate");
@@ -28,9 +29,11 @@ module.exports = async (req, res) => {
     const transport = makeTransport(process.env);
     await sendAppointmentMail(transport, process.env, payload);
 
+    // <<– HIER dein gewünschter Text
     return res.json({
       ok: true,
-      message: "Der Termin wurde an das Team gesendet!"
+      message:
+        "Der Termin wurde an das Team gesendet! Wenn der Termin abgesagt oder verschoben wird, melden wir uns bei Ihnen."
     });
   } catch (e) {
     console.error("Fehler beim Versenden der E-Mail:", e);
