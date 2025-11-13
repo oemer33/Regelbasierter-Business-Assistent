@@ -1,7 +1,6 @@
-// ===============================
-//   api/agent.js (kompletter Ersatz)
-//   - Termin-Kontext + Ja/Nein-Bestätigung
-// ===============================
+// =======================================
+//  api/agent.js – INTELLIGENTER MISCHMODUS
+// =======================================
 
 const {
   intentFromText,
@@ -11,133 +10,106 @@ const {
   collectAppointmentSlots
 } = require("../src/agent");
 
-// einfache Ja/Nein-Erkennung
+// Ja/Nein Erkennung
 function isYes(msg) {
   const t = msg.toLowerCase().trim();
-  const yesWords = [
-    "ja",
-    "ja bitte",
-    "okay",
-    "ok",
-    "mach das",
-    "alles klar",
-    "passt",
-    "in ordnung"
-  ];
-  return yesWords.some(
-    (w) => t === w || t.startsWith(w + " ") || t.endsWith(" " + w)
-  );
+  return ["ja", "ja bitte", "okay", "ok", "mach das", "passt"].includes(t);
 }
 
 function isNo(msg) {
   const t = msg.toLowerCase().trim();
-  const noWords = [
-    "nein",
-    "nee",
-    "lieber nicht",
-    "abbrechen",
-    "nicht senden",
-    "stopp"
-  ];
-  return noWords.some(
-    (w) => t === w || t.startsWith(w + " ") || t.endsWith(" " + w)
-  );
+  return ["nein", "nee", "lieber nicht", "nicht senden", "abbrechen"].includes(t);
 }
 
 module.exports = async (req, res) => {
   try {
-    if (req.method !== "POST") {
-      res.status(405).json({ error: "Method not allowed" });
-      return;
-    }
-
     const { message, state } = req.body || {};
-    if (!message) {
-      res.status(400).json({ error: "message fehlt" });
-      return;
+    const msg = message || "";
+    const lower = msg.toLowerCase();
+    let currentState = state || {};
+    const hasSlots = currentState.slots && typeof currentState.slots === "object";
+    const complete = currentState.complete;
+
+    // ===================================================
+    // 1) IMMER zuerst Begrüßung (auch mitten im Termin)
+    // ===================================================
+    const greeting = greetingIfHallo(msg);
+    if (greeting) {
+      return res.status(200).json({
+        reply: greeting,
+        state: currentState,
+        intent: "greeting"
+      });
     }
 
-    const currentState = state || {};
-    const hasSlots =
-      currentState.slots && typeof currentState.slots === "object";
-    const appointmentIncomplete = hasSlots && !currentState.complete;
-    const appointmentComplete = hasSlots && currentState.complete;
-
-    let intent = intentFromText(message);
-
-    // 🔁 Wenn eine Terminanfrage schon läuft und noch Infos fehlen:
-    // jede neue Nachricht als Termin-Fortsetzung behandeln (außer FAQ)
-    if (appointmentIncomplete && intent !== "faq") {
-      intent = "appointment";
+    // ===================================================
+    // 2) IMMER zuerst FAQs behandeln (auch während Termin)
+    // ===================================================
+    const faq = matchFaq(msg);
+    if (faq) {
+      return res.status(200).json({
+        reply: faq,
+        state: currentState,
+        intent: "faq"
+      });
     }
 
-    // ✅ Termin ist vollständig, warten auf JA/NEIN
-    if (appointmentComplete) {
-      if (isYes(message)) {
+    // ===================================================
+    // 3) Wenn Termin bereits vollständig → JA/NEIN prüfen
+    // ===================================================
+    if (hasSlots && complete) {
+      if (isYes(msg)) {
         return res.status(200).json({
           reply: "Alles klar, ich sende den Termin jetzt an unser Team.",
-          intent: "appointment_confirm_yes",
-          state: currentState,
-          auto_send: true
+          auto_send: true,
+          state: currentState
         });
       }
-      if (isNo(message)) {
+
+      if (isNo(msg)) {
         return res.status(200).json({
-          reply:
-            "Alles klar, ich sende den Termin nicht. Wenn du einen neuen Termin möchtest, sag mir einfach Bescheid.",
-          intent: "appointment_confirm_no",
-          state: {} // zurücksetzen
+          reply: "Alles klar, ich sende den Termin nicht. Wenn du etwas anderes brauchst, sag einfach Bescheid!",
+          state: {}
         });
       }
-      // wenn weder klar Ja noch Nein: Erinnerung
-      intent = "appointment";
-    }
 
-    // 1) Begrüßung (nur wenn kein laufender Termin)
-    if (intent === "greeting" && !appointmentIncomplete && !appointmentComplete) {
-      const g = greetingIfHallo(message);
+      // sonst einfach Erinnerung:
       return res.status(200).json({
-        reply: g,
-        intent: "greeting",
+        reply: "Sag 'ja', wenn ich den Termin senden soll, oder 'nein', um abzubrechen.",
         state: currentState
       });
     }
 
-    // 2) FAQ (nur wenn kein laufender Termin)
-    if (intent === "faq" && !appointmentIncomplete) {
-      const answer = matchFaq(message);
-      return res.status(200).json({
-        reply: answer,
-        intent,
-        state: currentState
-      });
-    }
+    // ===================================================
+    // 4) Termin-Erkennung (auch mitten in Fragen)
+    // ===================================================
+    const intent = intentFromText(msg);
 
-    // 3) Termin-Erfassung
-    if (intent === "appointment") {
-      const prevSlots = (currentState && currentState.slots) || {};
-      const { slots, complete, nextPrompt } = collectAppointmentSlots(
-        message,
-        prevSlots
-      );
+    // Wenn er "Termin" erwähnt → direkt Termin-Modus aktivieren
+    if (intent === "appointment" || hasSlots) {
+      const prev = (currentState.slots || {});
+      const { slots, complete, nextPrompt } = collectAppointmentSlots(msg, prev);
 
       return res.status(200).json({
         reply: nextPrompt,
-        intent: "appointment",
-        state: { slots, complete }
+        state: { slots, complete },
+        intent: "appointment"
       });
     }
 
-    // 4) Fallback
+    // ===================================================
+    // 5) Fallback – normale Antwort, inkl. Telefonnummer/Email
+    // ===================================================
     return res.status(200).json({
-      reply: answerGeneral(message),
-      intent: "fallback",
-      state: currentState
+      reply: answerGeneral(msg),
+      state: currentState,
+      intent: "fallback"
     });
+
   } catch (err) {
-    console.error("Agent-Fehler:", err);
-    res.status(500).json({
-      reply: "Da ist ein Fehler passiert.",
+    console.error("Agent error:", err);
+    return res.status(500).json({
+      reply: "Es ist ein Fehler passiert.",
       error: err.message
     });
   }
