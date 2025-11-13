@@ -1,5 +1,5 @@
 // ===============================
-//   src/agent.js (1:1 Ersatz)
+//   src/agent.js (kompletter Ersatz)
 // ===============================
 
 const fs = require("fs");
@@ -42,7 +42,7 @@ function greetingIfHallo(userText) {
   return null;
 }
 
-// Fallback
+// Fallback-Antwort
 function answerGeneral() {
   const salon = loadSalon();
   return (
@@ -57,53 +57,113 @@ function saveAppointment(appt) {
     const list = JSON.parse(fs.readFileSync(apptsPath, "utf-8"));
     list.push({ ...appt, created_at: new Date().toISOString() });
     fs.writeFileSync(apptsPath, JSON.stringify(list, null, 2), "utf-8");
-  } catch (_) {}
+  } catch (_) {
+    // im Serverless ggf. nicht möglich → ignorieren
+  }
 }
 
 // Intent-Erkennung
 function intentFromText(userText) {
   const t = userText.toLowerCase();
 
-  // Erst: Begrüßung?
-  if (t.startsWith("hallo") || t.startsWith("hi") || t.startsWith("guten tag"))
+  // 1) Begrüßung zuerst
+  if (t.startsWith("hallo") || t.startsWith("hi") || t.startsWith("guten tag") || t.startsWith("servus")) {
     return "greeting";
+  }
 
-  if (
-    ["termin", "buchen", "vereinbaren", "appointment"].some((k) =>
-      t.includes(k)
-    )
-  ) {
+  // 2) Termin-Wunsch
+  if (["termin", "buchen", "vereinbaren", "appointment"].some((k) => t.includes(k))) {
     return "appointment";
   }
 
+  // 3) FAQ
   if (matchFaq(userText)) return "faq";
 
+  // 4) sonst Fallback
   return "fallback";
 }
 
-// Vereinfachte Termin-Slot-Erkennung
+// Hilfsfunktion: Datum aus Text holen (ISO-Format erzeugen)
+function extractDateToISO(userText) {
+  const text = userText.toLowerCase();
+
+  // 1) Bereits im Format YYYY-MM-DD?
+  const isoMatch = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  if (isoMatch) {
+    return isoMatch[1]; // z.B. 2025-11-13
+  }
+
+  // 2) Format DD.MM.YYYY (z.B. 13.11.2025)
+  const dotMatch = text.match(/\b(\d{1,2})\.(\d{1,2})\.(20\d{2})\b/);
+  if (dotMatch) {
+    let day = dotMatch[1].padStart(2, "0");
+    let month = dotMatch[2].padStart(2, "0");
+    const year = dotMatch[3];
+    return `${year}-${month}-${day}`; // 2025-11-13
+  }
+
+  return null;
+}
+
+// Hilfsfunktion: Zeit aus Text holen (HH:MM)
+function extractTimeToHHMM(userText) {
+  const text = userText.toLowerCase();
+
+  // 1) Bereits im Format HH:MM?
+  const timeMatch = text.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+  if (timeMatch) {
+    return timeMatch[0]; // z.B. 14:30
+  }
+
+  // 2) "um 14 uhr" oder "14 uhr"
+  const hourUhrMatch = text.match(/\b(?:um\s*)?([01]?\d|2[0-3])\s*uhr\b/);
+  if (hourUhrMatch) {
+    const h = hourUhrMatch[1].padStart(2, "0");
+    return `${h}:00`;
+  }
+
+  // 3) "um 14" (ohne "Uhr")
+  const hourOnlyMatch = text.match(/\bum\s*([01]?\d|2[0-3])\b/);
+  if (hourOnlyMatch) {
+    const h = hourOnlyMatch[1].padStart(2, "0");
+    return `${h}:00`;
+  }
+
+  return null;
+}
+
+// Vereinfachte Termin-Slot-Erkennung (Name + Datum + Uhrzeit)
 function collectAppointmentSlots(userText, state = {}) {
   let s = { ...state };
+  const text = userText.toLowerCase();
 
-  // Name erkennen
-  const maybeName = userText.match(
-    /\b(ich bin|mein name ist)\s+([a-zäöüß\- ]+)/i
-  );
-  if (!s.name && maybeName) s.name = maybeName[2].trim();
+  // Name erkennen: "ich bin ..." oder "mein name ist ..."
+  const maybeName = userText.match(/\b(ich bin|mein name ist)\s+([a-zäöüß\- ]+)/i);
+  if (!s.name && maybeName) {
+    s.name = maybeName[2].trim();
+  }
 
-  // Datum (YYYY-MM-DD)
-  const dateMatch = userText.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
-  if (!s.date && dateMatch) s.date = dateMatch[1];
+  // Datum extrahieren & in ISO-Format bringen
+  if (!s.date) {
+    const dateISO = extractDateToISO(text);
+    if (dateISO) {
+      s.date = dateISO; // z.B. 2025-11-13
+    }
+  }
 
-  // Zeit (HH:MM)
-  const timeMatch = userText.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
-  if (!s.time && timeMatch) s.time = timeMatch[0];
+  // Zeit extrahieren & in HH:MM bringen
+  if (!s.time) {
+    const timeHHMM = extractTimeToHHMM(text);
+    if (timeHHMM) {
+      s.time = timeHHMM; // z.B. 14:00
+    }
+  }
 
   // Fehlende Angaben
   const missing = [];
   if (!s.name) missing.push("deinen Namen");
-  if (!s.date) missing.push("das Datum (YYYY-MM-DD)");
-  if (!s.time) missing.push("die Uhrzeit (HH:MM)");
+  if (!s.date) missing.push("das Datum (z.B. 13.11.2025)");
+  if (!s.time) missing.push("die Uhrzeit (z.B. 14 Uhr)");
 
   const complete = missing.length === 0;
 
@@ -123,4 +183,3 @@ module.exports = {
   intentFromText,
   collectAppointmentSlots
 };
-
