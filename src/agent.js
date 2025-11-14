@@ -1,6 +1,10 @@
 // =======================================
-// src/agent.js – zufällige Antworten,
-// lockere Begrüßung & einfache Termin-Logik
+// src/agent.js
+// - zufällige, lockere Antworten
+// - FAQ mit mehreren Varianten
+// - Termin-Slots (Name, Datum, Uhrzeit, Telefonnummer)
+// - Datum robust: 23.12.2025 UND 23.12.25
+// - Telefonnummer: jede Folge von >= 6 Ziffern
 // =======================================
 
 const fs = require("fs");
@@ -97,28 +101,67 @@ function looksLikeSlotUpdate(text) {
   const t = text.toLowerCase();
 
   const hasDate = /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/.test(t);
-  const hasTime = /\b\d{1,2}:\d{2}\b/.test(t) || /\b\d{1,2}\s*uhr\b/.test(t);
-  const hasPhone = /\d{6,}/.test(t); // 👉 mind. 6 Ziffern hintereinander
-  const hasNamePhrase = t.includes("mein name ist") || t.includes("ich bin ");
+  const hasTime =
+    /\b\d{1,2}:\d{2}\b/.test(t) ||
+    /\b\d{1,2}\s*uhr\b/.test(t);
+  const hasPhone = /\d{6,}/.test(t); // 👉 mind. 6 Ziffern irgendwo im Text
+  const hasNamePhrase =
+    t.includes("mein name ist") ||
+    t.includes("ich bin ");
 
   return hasDate || hasTime || hasPhone || hasNamePhrase;
 }
 
 // --------------------------------------------------------
+// Datum: aus „23.12.2025“ oder „23.12.25“ → ISO „2025-12-23“
+// --------------------------------------------------------
+function parseGermanDateToISO(text) {
+  const m = text.match(/\b(\d{1,2})\.(\d{1,2})\.(\d{2,4})\b/);
+  if (!m) return null;
+
+  let day = parseInt(m[1], 10);
+  let month = parseInt(m[2], 10);
+  let year = parseInt(m[3], 10);
+
+  // 2-stellige Jahreszahl → 2000+YY (z.B. 25 → 2025)
+  if (year < 100) {
+    year = 2000 + year;
+  }
+
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+  const d = new Date(year, month - 1, day);
+  if (
+    d.getFullYear() !== year ||
+    d.getMonth() !== month - 1 ||
+    d.getDate() !== day
+  ) {
+    return null;
+  }
+
+  const dd = String(day).padStart(2, "0");
+  const mm = String(month).padStart(2, "0");
+  const yyyy = String(year);
+
+  // ISO-Format für Server & Validierung
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+// --------------------------------------------------------
 // Termin-Daten sammeln
-// Slots: name, date, time, phone
+// Slots: name, date (ISO), time, phone
 // --------------------------------------------------------
 function collectAppointmentSlots(msg, prev) {
   const text = msg.toLowerCase();
   let slots = { ...prev };
 
-  // Name
+  // NAME:
   if (!slots.name) {
     const m = text.match(/(ich bin|mein name ist)\s+([a-zA-Zäöüß ]+)/);
     if (m) {
       slots.name = m[2].trim();
     } else {
-      // falls nur Name geschrieben wird, z.B. "Tom"
+      // wenn nur Name kommt, z.B. "Tom" oder "Tom Müller"
       const single = msg.trim();
       if (
         single.length > 1 &&
@@ -130,26 +173,28 @@ function collectAppointmentSlots(msg, prev) {
     }
   }
 
-  // Datum (z.B. 23.12.2025)
-  if (!slots.date) {
-    const m = text.match(/\b(\d{1,2}\.\d{1,2}\.\d{2,4})\b/);
-    if (m) slots.date = m[1];
+  // DATUM: immer neu parsen, und wenn gültig → überschreiben
+  const isoDate = parseGermanDateToISO(text);
+  if (isoDate) {
+    slots.date = isoDate; // z.B. "2025-12-23"
   }
 
-  // Uhrzeit (z.B. 14:00 oder "14 uhr")
-  if (!slots.time) {
-    const m1 = text.match(/\b(\d{1,2}:\d{2})\b/);
-    const m2 = text.match(/\b(\d{1,2})\s*uhr\b/);
-    if (m1) slots.time = m1[1];
-    else if (m2) slots.time = m2[1] + ":00";
+  // UHRZEIT: auch überschreiben, wenn neu erkannt
+  const mTime1 = text.match(/\b(\d{1,2}):(\d{2})\b/);
+  const mTime2 = text.match(/\b(\d{1,2})\s*uhr\b/);
+  if (mTime1) {
+    const h = mTime1[1].padStart(2, "0");
+    const min = mTime1[2];
+    slots.time = `${h}:${min}`;
+  } else if (mTime2) {
+    const h = mTime2[1].padStart(2, "0");
+    slots.time = `${h}:00`;
   }
 
-  // Telefonnummer – ab jetzt: jede Folge von mindestens 6 Ziffern
-  if (!slots.phone) {
-    const m = text.match(/(\d{6,})/);
-    if (m) {
-      slots.phone = m[1];
-    }
+  // TELEFON: jede Folge von mindestens 6 Ziffern
+  const mPhone = text.match(/(\d{6,})/);
+  if (mPhone) {
+    slots.phone = mPhone[1];
   }
 
   // komplett?
@@ -163,11 +208,14 @@ function collectAppointmentSlots(msg, prev) {
 
   let nextPrompt = "";
   if (complete) {
-    nextPrompt = "Perfekt 👍 Ich habe alles. Soll ich den Termin jetzt an dein Salon-Team schicken?";
+    nextPrompt =
+      "Perfekt 👍 Ich habe alles: Name, Datum, Uhrzeit und Telefonnummer. Soll ich den Termin jetzt an dein Salon-Team schicken?";
   } else if (missing.length === 1) {
     nextPrompt = `Alles klar 😊 Ich brauche noch ${missing[0]}.`;
   } else {
-    nextPrompt = `Damit ich den Termin eintragen kann, brauche ich noch: ${missing.join(", ")}.`;
+    nextPrompt = `Damit ich den Termin eintragen kann, brauche ich noch: ${missing.join(
+      ", "
+    )}.`;
   }
 
   return { slots, complete, nextPrompt };
