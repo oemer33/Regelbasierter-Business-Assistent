@@ -1,6 +1,7 @@
 // ===============================
-// public/app.js – minimaler Chat,
-// Login + Sprache, Tipp-Animation, TTS ohne Emojis
+// public/app.js – ChatGPT-Style UI
+// Login + Sprache, Tipp-Animation, TTS ohne Emojis,
+// Sidepanel & Drei-Punkte-Menü
 // ===============================
 
 const $ = (s) => document.querySelector(s);
@@ -11,6 +12,14 @@ const startBtn = $("#start_btn");
 const welcomeEmail = $("#welcome_email");
 const welcomeLang = $("#welcome_lang");
 
+// Header / Menüs
+const menuBtn = $("#menu_btn");
+const moreBtn = $("#more_btn");
+const infoPanel = $("#info_panel");
+const closePanelBtn = $("#close_panel");
+const moreMenu = $("#more_menu");
+const moreCloseBtn = $("#more_close_btn");
+
 // Chat-Elemente
 const transcript = $("#transcript");
 const typingIndicator = $("#typing_indicator");
@@ -19,7 +28,7 @@ const textInput = $("#text_input");
 const sendBtn = $("#send_btn");
 const serviceSelect = $("#service_select");
 
-// Feedback
+// Feedback (im Drei-Punkte-Menü)
 const feedbackText = $("#feedback_text");
 const feedbackSendBtn = $("#feedback_send_btn");
 const feedbackStatus = $("#feedback_status");
@@ -45,12 +54,27 @@ function removeEmojis(text) {
 fetch("/api/salon")
   .then((r) => r.json())
   .then((salon) => {
-    $("#company_name").textContent = salon.company_name;
-    $("#address").textContent = salon.address;
-    $("#phone").textContent = salon.phone;
-    $("#phone").href = `tel:${salon.phone.replace(/\s+/g, "")}`;
-    $("#email").textContent = salon.email;
-    $("#email").href = `mailto:${salon.email}`;
+    const companyNameEl = $("#company_name");
+    if (companyNameEl) companyNameEl.textContent = salon.company_name;
+
+    const panelName = $("#panel_name");
+    if (panelName) panelName.textContent = salon.company_name;
+
+    const panelAddress = $("#panel_address");
+    const panelPhone = $("#panel_phone");
+    const panelEmail = $("#panel_email");
+
+    if (panelAddress) panelAddress.textContent = salon.address || "";
+    if (panelPhone) {
+      panelPhone.textContent = salon.phone || "";
+      panelPhone.href = salon.phone
+        ? `tel:${salon.phone.replace(/\s+/g, "")}`
+        : "#";
+    }
+    if (panelEmail) {
+      panelEmail.textContent = salon.email || "";
+      panelEmail.href = salon.email ? `mailto:${salon.email}` : "#";
+    }
   })
   .catch(() => {});
 
@@ -310,6 +334,41 @@ if (startBtn) {
 
     if (overlay) {
       overlay.classList.add("hidden");
+    }
+  });
+}
+
+// Sidepanel: Salon-Infos
+if (menuBtn && infoPanel && closePanelBtn) {
+  menuBtn.addEventListener("click", () => {
+    infoPanel.classList.remove("hidden");
+  });
+
+  closePanelBtn.addEventListener("click", () => {
+    infoPanel.classList.add("hidden");
+  });
+
+  // Panel schließen, wenn in den dunklen Bereich geklickt wird (außerhalb)
+  infoPanel.addEventListener("click", (e) => {
+    if (e.target === infoPanel) {
+      infoPanel.classList.add("hidden");
+    }
+  });
+}
+
+// Drei-Punkte-Menü: Leistung + Feedback
+if (moreBtn && moreMenu && moreCloseBtn) {
+  moreBtn.addEventListener("click", () => {
+    moreMenu.classList.remove("hidden");
+  });
+
+  moreCloseBtn.addEventListener("click", () => {
+    moreMenu.classList.add("hidden");
+  });
+
+  moreMenu.addEventListener("click", (e) => {
+    if (e.target === moreMenu) {
+      moreMenu.classList.add("hidden");
     }
   });
 }
