@@ -1,8 +1,10 @@
 // ===============================
-// public/app.js – kurzer Chat + TTS ohne Emoji
+// public/app.js – kurzer Chat, Service-Auswahl,
+// Feedback & TTS ohne Emojis
 // ===============================
 
 const $ = (s) => document.querySelector(s);
+
 const transcript = $("#transcript");
 const micBtn = $("#mic_btn");
 const micStatus = $("#mic_status");
@@ -10,11 +12,18 @@ const confirmBtn = $("#confirm_btn");
 const confirmHint = $("#confirm_hint");
 const textInput = $("#text_input");
 const sendBtn = $("#send_btn");
+const serviceSelect = $("#service_select");
+
+// Feedback-Elemente
+const feedbackEmail = $("#feedback_email");
+const feedbackText = $("#feedback_text");
+const feedbackSendBtn = $("#feedback_send_btn");
+const feedbackStatus = $("#feedback_status");
 
 let agentState = { slots: {}, complete: false };
 let speaking = false;
 
-// Emojis aus Text entfernen (nur für Sprachausgabe!)
+// Emojis aus Text entfernen (nur für Sprachausgabe)
 function removeEmojis(text) {
   return text.replace(
     /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u26FF])/g,
@@ -64,7 +73,7 @@ function speak(text) {
     if (!text || typeof text !== "string") return;
     if (synth.speaking) synth.cancel();
 
-    const clean = removeEmojis(text); // 👉 Emojis raus für Sprache
+    const clean = removeEmojis(text);
     if (!clean.trim()) return;
 
     const utter = new SpeechSynthesisUtterance(clean);
@@ -111,11 +120,13 @@ function addMsg(role, text) {
 async function sendAppointment() {
   const s = agentState.slots || {};
   const datetime = s.date && s.time ? `${s.date}T${s.time}` : null;
+  const service = serviceSelect ? serviceSelect.value : "";
 
   const payload = {
     name: s.name,
     datetime,
-    contact: s.phone || s.contact, // Telefonnummer bevorzugt
+    contact: s.email || s.phone, // E-Mail bevorzugt, sonst Telefonnummer
+    service,
     notes: s.notes
   };
 
@@ -166,8 +177,8 @@ async function sendToAgent(text) {
 
     confirmBtn.disabled = !agentState?.complete;
     confirmHint.textContent = agentState?.complete
-      ? "Alle Angaben vorhanden (Name, Datum, Uhrzeit, Kontakt). Du kannst 'Ja' sagen oder den Button nutzen."
-      : "Wird aktiv, wenn Name, Datum, Uhrzeit und Kontakt vorhanden sind.";
+      ? "Alle Angaben vorhanden (Name, Datum, Uhrzeit, E-Mail). Du kannst 'Ja' sagen oder den Button nutzen."
+      : "Wird aktiv, wenn Name, Datum, Uhrzeit und E-Mail vorhanden sind.";
 
     if (data.auto_send) {
       await sendAppointment();
@@ -210,6 +221,36 @@ function startRecognition() {
   rec.start();
 }
 
+// Feedback senden
+async function sendFeedback() {
+  feedbackStatus.textContent = "";
+  const email = feedbackEmail.value.trim();
+  const text = feedbackText.value.trim();
+
+  if (!text) {
+    feedbackStatus.textContent = "Bitte schreiben Sie kurz, was los ist 🙂";
+    return;
+  }
+
+  try {
+    const r = await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, text })
+    });
+    const data = await r.json();
+
+    if (data.ok) {
+      feedbackStatus.textContent = "Vielen Dank für Ihr Feedback 🙏";
+      feedbackText.value = "";
+    } else {
+      feedbackStatus.textContent = "Feedback konnte nicht gesendet werden.";
+    }
+  } catch (e) {
+    feedbackStatus.textContent = "Netzwerkfehler beim Senden des Feedbacks.";
+  }
+}
+
 // Events
 
 micBtn.addEventListener("click", () => {
@@ -235,4 +276,8 @@ textInput.addEventListener("keydown", (e) => {
 
 confirmBtn.addEventListener("click", async () => {
   await sendAppointment();
+});
+
+feedbackSendBtn.addEventListener("click", () => {
+  sendFeedback();
 });
