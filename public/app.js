@@ -115,7 +115,7 @@ async function sendAppointment() {
   const payload = {
     name: s.name,
     datetime,
-    contact: s.phone || s.contact, // phone bevorzugt
+    contact: s.phone || s.contact, // Telefonnummer bevorzugt
     notes: s.notes
   };
 
