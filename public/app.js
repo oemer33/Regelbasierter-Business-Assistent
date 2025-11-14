@@ -1,11 +1,18 @@
 // ===============================
-// public/app.js – kurzer Chat, Service-Auswahl,
-// Feedback & TTS ohne Emojis
+// public/app.js – Login + Sprache,
+// Tipp-Animation, Feedback & TTS ohne Emojis
 // ===============================
 
 const $ = (s) => document.querySelector(s);
 
+const overlay = $("#welcome_overlay");
+const startBtn = $("#start_btn");
+const welcomeEmail = $("#welcome_email");
+const welcomeLang = $("#welcome_lang");
+
 const transcript = $("#transcript");
+const typingIndicator = $("#typing_indicator");
+
 const micBtn = $("#mic_btn");
 const micStatus = $("#mic_status");
 const confirmBtn = $("#confirm_btn");
@@ -14,21 +21,36 @@ const textInput = $("#text_input");
 const sendBtn = $("#send_btn");
 const serviceSelect = $("#service_select");
 
-// Feedback-Elemente
-const feedbackEmail = $("#feedback_email");
 const feedbackText = $("#feedback_text");
 const feedbackSendBtn = $("#feedback_send_btn");
 const feedbackStatus = $("#feedback_status");
 
+const qrImage = $("#qr_image");
+
 let agentState = { slots: {}, complete: false };
 let speaking = false;
+let initialized = false;
 
-// Emojis aus Text entfernen (nur für Sprachausgabe)
+let userProfile = {
+  email: "",
+  lang: "de"
+};
+
+// Emojis aus Text entfernen (nur für Sprachausgabe!)
 function removeEmojis(text) {
   return text.replace(
     /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u26FF])/g,
     ""
   );
+}
+
+// QR-Code setzen (externe API, Link zur aktuellen Seite)
+if (qrImage) {
+  const url = window.location.href;
+  const qrUrl =
+    "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
+    encodeURIComponent(url);
+  qrImage.src = qrUrl;
 }
 
 // Stammdaten laden
@@ -61,10 +83,20 @@ if (hasTTS) {
   window.speechSynthesis.onvoiceschanged = loadVoices;
 }
 
-function getGermanVoice() {
+function getVoiceForLang(langCode) {
   if (!voices || voices.length === 0) return null;
-  const de = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("de"));
-  return de || voices[0];
+  const v = voices.find(
+    (voice) =>
+      voice.lang &&
+      voice.lang.toLowerCase().startsWith(langCode.toLowerCase().slice(0, 2))
+  );
+  return v || voices[0];
+}
+
+function getLangCode() {
+  if (userProfile.lang === "en") return "en-US";
+  if (userProfile.lang === "tr") return "tr-TR";
+  return "de-DE";
 }
 
 function speak(text) {
@@ -77,8 +109,9 @@ function speak(text) {
     if (!clean.trim()) return;
 
     const utter = new SpeechSynthesisUtterance(clean);
-    utter.lang = "de-DE";
-    const voice = getGermanVoice();
+    const langCode = getLangCode();
+    utter.lang = langCode;
+    const voice = getVoiceForLang(langCode);
     if (voice) utter.voice = voice;
     utter.rate = 1.0;
     utter.pitch = 1.0;
@@ -116,16 +149,26 @@ function addMsg(role, text) {
   transcript.scrollTop = transcript.scrollHeight;
 }
 
+// Tipp-Animation steuern
+function showTyping() {
+  if (typingIndicator) typingIndicator.classList.remove("hidden");
+}
+function hideTyping() {
+  if (typingIndicator) typingIndicator.classList.add("hidden");
+}
+
 // Termin an Server senden
 async function sendAppointment() {
   const s = agentState.slots || {};
   const datetime = s.date && s.time ? `${s.date}T${s.time}` : null;
   const service = serviceSelect ? serviceSelect.value : "";
 
+  const contact = s.email || s.phone || userProfile.email;
+
   const payload = {
     name: s.name,
     datetime,
-    contact: s.email || s.phone, // E-Mail bevorzugt, sonst Telefonnummer
+    contact,
     service,
     notes: s.notes
   };
@@ -158,18 +201,31 @@ async function sendAppointment() {
 
 // Nachricht an den Agent-Backend schicken
 async function sendToAgent(text) {
+  if (!initialized) {
+    alert("Bitte zuerst oben im Fenster E-Mail und Sprache auswählen.");
+    return;
+  }
   if (!text || !text.trim()) return;
+
   const clean = text.trim();
   addMsg("user", clean);
   textInput.value = "";
 
+  showTyping();
   try {
     const r = await fetch("/api/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: clean, state: agentState })
+      body: JSON.stringify({
+        message: clean,
+        state: agentState,
+        lang: userProfile.lang,
+        user: { email: userProfile.email }
+      })
     });
     const data = await r.json();
+    hideTyping();
+
     agentState = data.state || agentState;
 
     addMsg("agent", data.reply);
@@ -184,12 +240,17 @@ async function sendToAgent(text) {
       await sendAppointment();
     }
   } catch (e) {
+    hideTyping();
     addMsg("agent", "Es gab ein Verbindungsproblem mit dem Server.");
   }
 }
 
 // Spracherkennung
 function startRecognition() {
+  if (!initialized) {
+    alert("Bitte zuerst oben im Fenster E-Mail und Sprache auswählen.");
+    return;
+  }
   if (!SpeechRecognition) {
     alert(
       "Spracherkennung wird von diesem Browser nicht unterstützt. Bitte Chrome oder einen aktuellen Browser verwenden."
@@ -198,7 +259,7 @@ function startRecognition() {
   }
 
   const rec = new SpeechRecognition();
-  rec.lang = "de-DE";
+  rec.lang = getLangCode();
   rec.interimResults = false;
   rec.maxAlternatives = 1;
 
@@ -224,7 +285,6 @@ function startRecognition() {
 // Feedback senden
 async function sendFeedback() {
   feedbackStatus.textContent = "";
-  const email = feedbackEmail.value.trim();
   const text = feedbackText.value.trim();
 
   if (!text) {
@@ -236,7 +296,10 @@ async function sendFeedback() {
     const r = await fetch("/api/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, text })
+      body: JSON.stringify({
+        email: userProfile.email || "",
+        text
+      })
     });
     const data = await r.json();
 
@@ -249,6 +312,27 @@ async function sendFeedback() {
   } catch (e) {
     feedbackStatus.textContent = "Netzwerkfehler beim Senden des Feedbacks.";
   }
+}
+
+// Overlay: Start / Login
+if (startBtn) {
+  startBtn.addEventListener("click", () => {
+    const email = (welcomeEmail.value || "").trim();
+    const lang = welcomeLang.value || "de";
+
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      alert("Bitte eine gültige E-Mail-Adresse eingeben (z. B. name@icloud.com).");
+      return;
+    }
+
+    userProfile.email = email;
+    userProfile.lang = lang;
+    initialized = true;
+
+    if (overlay) {
+      overlay.classList.add("hidden");
+    }
+  });
 }
 
 // Events
