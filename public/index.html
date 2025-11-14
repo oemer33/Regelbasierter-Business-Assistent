@@ -66,9 +66,6 @@
             <h2>Salon-Assistent</h2>
             <p>Stelle Fragen oder vereinbare einen Termin – per Text oder Sprache.</p>
           </div>
-          <button id="mic_btn" aria-label="Mikrofon aktivieren" class="mic-round">
-            🎙️
-          </button>
         </header>
 
         <div class="service-row">
@@ -95,20 +92,26 @@
             type="text"
             placeholder="Frage stellen oder Termindaten mit E-Mail eingeben …"
           />
-          <button id="send_btn">Senden</button>
+
+          <button
+            id="mic_btn"
+            aria-label="Spracheingabe"
+            class="mic-round small-round"
+          >
+            🎙️
+          </button>
+
+          <button id="send_btn" class="send-btn">➤</button>
         </div>
       </section>
 
       <section class="feedback">
         <h3>Feedback & Rückmeldung</h3>
-        <p class="muted small">
-          Wenn etwas nicht wie erwartet funktioniert oder du eine Idee hast, schreib es hier – die Nachricht wird an das Team gesendet.
-        </p>
         <div class="feedback-row">
           <textarea
             id="feedback_text"
-            rows="3"
-            placeholder="Dein Feedback an den Salon …"
+            rows="2"
+            placeholder="Wenn etwas nicht wie erwartet funktioniert oder du eine Idee hast, schreib es hier – die Nachricht wird an das Team gesendet."
           ></textarea>
         </div>
         <div class="feedback-row feedback-actions">
@@ -128,5 +131,3 @@
   <script src="/app.js" type="module"></script>
 </body>
 </html>
-
-  
