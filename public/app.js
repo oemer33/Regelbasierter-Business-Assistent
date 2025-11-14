@@ -1,31 +1,28 @@
 // ===============================
-// public/app.js – Login + Sprache,
-// Tipp-Animation, Feedback & TTS ohne Emojis
+// public/app.js – minimaler Chat,
+// Login + Sprache, Tipp-Animation, TTS ohne Emojis
 // ===============================
 
 const $ = (s) => document.querySelector(s);
 
+// Overlay / Login
 const overlay = $("#welcome_overlay");
 const startBtn = $("#start_btn");
 const welcomeEmail = $("#welcome_email");
 const welcomeLang = $("#welcome_lang");
 
+// Chat-Elemente
 const transcript = $("#transcript");
 const typingIndicator = $("#typing_indicator");
-
 const micBtn = $("#mic_btn");
-const micStatus = $("#mic_status");
-const confirmBtn = $("#confirm_btn");
-const confirmHint = $("#confirm_hint");
 const textInput = $("#text_input");
 const sendBtn = $("#send_btn");
 const serviceSelect = $("#service_select");
 
+// Feedback
 const feedbackText = $("#feedback_text");
 const feedbackSendBtn = $("#feedback_send_btn");
 const feedbackStatus = $("#feedback_status");
-
-const qrImage = $("#qr_image");
 
 let agentState = { slots: {}, complete: false };
 let speaking = false;
@@ -36,7 +33,7 @@ let userProfile = {
   lang: "de"
 };
 
-// Emojis aus Text entfernen (nur für Sprachausgabe!)
+// Emojis aus Text entfernen (nur für Sprachausgabe)
 function removeEmojis(text) {
   return text.replace(
     /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u26FF])/g,
@@ -44,16 +41,7 @@ function removeEmojis(text) {
   );
 }
 
-// QR-Code setzen (externe API, Link zur aktuellen Seite)
-if (qrImage) {
-  const url = window.location.href;
-  const qrUrl =
-    "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
-    encodeURIComponent(url);
-  qrImage.src = qrUrl;
-}
-
-// Stammdaten laden
+// Salon-Stammdaten laden
 fetch("/api/salon")
   .then((r) => r.json())
   .then((salon) => {
@@ -149,7 +137,7 @@ function addMsg(role, text) {
   transcript.scrollTop = transcript.scrollHeight;
 }
 
-// Tipp-Animation steuern
+// Tipp-Animation
 function showTyping() {
   if (typingIndicator) typingIndicator.classList.remove("hidden");
 }
@@ -157,12 +145,11 @@ function hideTyping() {
   if (typingIndicator) typingIndicator.classList.add("hidden");
 }
 
-// Termin an Server senden
+// Termin an Server senden (für auto_send vom Agent)
 async function sendAppointment() {
   const s = agentState.slots || {};
   const datetime = s.date && s.time ? `${s.date}T${s.time}` : null;
   const service = serviceSelect ? serviceSelect.value : "";
-
   const contact = s.email || s.phone || userProfile.email;
 
   const payload = {
@@ -187,7 +174,6 @@ async function sendAppointment() {
         "Der Termin wurde an das Team gesendet! Wenn der Termin abgesagt oder verschoben wird, melden wir uns bei Ihnen.";
       addMsg("agent", msg);
       speak(msg);
-      confirmBtn.disabled = true;
     } else {
       const errMsg =
         "Konnte nicht senden: " + (data.error || "Unbekannter Fehler");
@@ -199,10 +185,10 @@ async function sendAppointment() {
   }
 }
 
-// Nachricht an den Agent-Backend schicken
+// Nachricht an Agent schicken
 async function sendToAgent(text) {
   if (!initialized) {
-    alert("Bitte zuerst oben im Fenster E-Mail und Sprache auswählen.");
+    alert("Bitte zuerst E-Mail und Sprache wählen.");
     return;
   }
   if (!text || !text.trim()) return;
@@ -231,11 +217,6 @@ async function sendToAgent(text) {
     addMsg("agent", data.reply);
     speak(data.reply);
 
-    confirmBtn.disabled = !agentState?.complete;
-    confirmHint.textContent = agentState?.complete
-      ? "Alle Angaben vorhanden (Name, Datum, Uhrzeit, E-Mail). Du kannst 'Ja' sagen oder den Button nutzen."
-      : "Wird aktiv, wenn Name, Datum, Uhrzeit und E-Mail vorhanden sind.";
-
     if (data.auto_send) {
       await sendAppointment();
     }
@@ -245,15 +226,15 @@ async function sendToAgent(text) {
   }
 }
 
-// Spracherkennung
+// Spracherkennung starten
 function startRecognition() {
   if (!initialized) {
-    alert("Bitte zuerst oben im Fenster E-Mail und Sprache auswählen.");
+    alert("Bitte zuerst E-Mail und Sprache wählen.");
     return;
   }
   if (!SpeechRecognition) {
     alert(
-      "Spracherkennung wird von diesem Browser nicht unterstützt. Bitte Chrome oder einen aktuellen Browser verwenden."
+      "Spracherkennung wird von diesem Browser nicht unterstützt. Bitte einen aktuellen Browser verwenden."
     );
     return;
   }
@@ -264,15 +245,13 @@ function startRecognition() {
   rec.maxAlternatives = 1;
 
   rec.onstart = () => {
-    micStatus.textContent = "Zuhören…";
     micBtn.classList.add("recording");
   };
   rec.onend = () => {
-    micStatus.textContent = "bereit";
     micBtn.classList.remove("recording");
   };
-  rec.onerror = (e) => {
-    micStatus.textContent = "Fehler: " + e.error;
+  rec.onerror = () => {
+    micBtn.classList.remove("recording");
   };
   rec.onresult = (evt) => {
     const text = evt.results[0][0].transcript;
@@ -288,7 +267,7 @@ async function sendFeedback() {
   const text = feedbackText.value.trim();
 
   if (!text) {
-    feedbackStatus.textContent = "Bitte schreiben Sie kurz, was los ist 🙂";
+    feedbackStatus.textContent = "Bitte schreibe kurz, was los ist 🙂";
     return;
   }
 
@@ -304,7 +283,7 @@ async function sendFeedback() {
     const data = await r.json();
 
     if (data.ok) {
-      feedbackStatus.textContent = "Vielen Dank für Ihr Feedback 🙏";
+      feedbackStatus.textContent = "Vielen Dank für dein Feedback 🙏";
       feedbackText.value = "";
     } else {
       feedbackStatus.textContent = "Feedback konnte nicht gesendet werden.";
@@ -314,7 +293,7 @@ async function sendFeedback() {
   }
 }
 
-// Overlay: Start / Login
+// Overlay / Login
 if (startBtn) {
   startBtn.addEventListener("click", () => {
     const email = (welcomeEmail.value || "").trim();
@@ -356,10 +335,6 @@ textInput.addEventListener("keydown", (e) => {
     const text = textInput.value;
     sendToAgent(text);
   }
-});
-
-confirmBtn.addEventListener("click", async () => {
-  await sendAppointment();
 });
 
 feedbackSendBtn.addEventListener("click", () => {
