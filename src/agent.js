@@ -2,34 +2,34 @@
 // src/agent.js
 // - zufällige, lockere Antworten
 // - FAQ mit mehreren Varianten
-// - Termin-Slots (Name, Datum, Uhrzeit, Telefonnummer)
-// - Datum robust: 23.12.2025 UND 23.12.25
+// - Termin-Slots (Name, Datum, Uhrzeit, E-Mail, Telefonnummer)
+// - Datum robust: 23.12.2025 UND 23.12.25 → ISO
 // - Telefonnummer: jede Folge von >= 6 Ziffern
 // =======================================
 
 const fs = require("fs");
 const path = require("path");
 
-// --------------------------------------------------------
+// -----------------------------
 // Zufällige Antwort auswählen
-// --------------------------------------------------------
+// -----------------------------
 function pickRandom(arr) {
   if (!Array.isArray(arr) || arr.length === 0) return null;
   const idx = Math.floor(Math.random() * arr.length);
   return arr[idx];
 }
 
-// --------------------------------------------------------
+// -----------------------------
 // FAQs laden
-// --------------------------------------------------------
+// -----------------------------
 function loadFaqs() {
   const p = path.join(process.cwd(), "config", "faqs.json");
   return JSON.parse(fs.readFileSync(p, "utf8"));
 }
 
-// --------------------------------------------------------
-// Lockere Begrüßung mit Emojis & mehreren Varianten
-// --------------------------------------------------------
+// -----------------------------
+// Lockere Begrüßung
+// -----------------------------
 function greetingIfHallo(userText) {
   const lower = userText.toLowerCase().trim();
 
@@ -52,9 +52,9 @@ function greetingIfHallo(userText) {
   return pickRandom(options);
 }
 
-// --------------------------------------------------------
-// FAQ-Erkennung (mit zufälliger Antwort)
-// --------------------------------------------------------
+// -----------------------------
+// FAQ-Erkennung
+// -----------------------------
 function matchFaq(userText) {
   const text = userText.toLowerCase();
   const faqs = loadFaqs();
@@ -75,9 +75,9 @@ function matchFaq(userText) {
   return null;
 }
 
-// --------------------------------------------------------
-// Intent bestimmen (Termin oder nicht)
-// --------------------------------------------------------
+// -----------------------------
+// Intent bestimmen
+// -----------------------------
 function intentFromText(text) {
   const t = text.toLowerCase();
 
@@ -93,28 +93,26 @@ function intentFromText(text) {
   return "fallback";
 }
 
-// --------------------------------------------------------
-// Prüfen, ob Nachricht wie Termin-Daten aussieht
-// (Datum, Uhrzeit, Nummer, Name etc.)
-// --------------------------------------------------------
+// -----------------------------
+// Sieht aus wie Termin-Details?
+// -----------------------------
 function looksLikeSlotUpdate(text) {
   const t = text.toLowerCase();
 
   const hasDate = /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/.test(t);
   const hasTime =
-    /\b\d{1,2}:\d{2}\b/.test(t) ||
-    /\b\d{1,2}\s*uhr\b/.test(t);
-  const hasPhone = /\d{6,}/.test(t); // 👉 mind. 6 Ziffern irgendwo im Text
+    /\b\d{1,2}:\d{2}\b/.test(t) || /\b\d{1,2}\s*uhr\b/.test(t);
+  const hasPhone = /\d{6,}/.test(t);
   const hasNamePhrase =
-    t.includes("mein name ist") ||
-    t.includes("ich bin ");
+    t.includes("mein name ist") || t.includes("ich bin ");
+  const hasEmail = /\S+@\S+\.\S+/.test(t);
 
-  return hasDate || hasTime || hasPhone || hasNamePhrase;
+  return hasDate || hasTime || hasPhone || hasNamePhrase || hasEmail;
 }
 
-// --------------------------------------------------------
-// Datum: aus „23.12.2025“ oder „23.12.25“ → ISO „2025-12-23“
-// --------------------------------------------------------
+// -----------------------------
+// Datum: "23.12.25" → "2025-12-23"
+// -----------------------------
 function parseGermanDateToISO(text) {
   const m = text.match(/\b(\d{1,2})\.(\d{1,2})\.(\d{2,4})\b/);
   if (!m) return null;
@@ -123,7 +121,6 @@ function parseGermanDateToISO(text) {
   let month = parseInt(m[2], 10);
   let year = parseInt(m[3], 10);
 
-  // 2-stellige Jahreszahl → 2000+YY (z.B. 25 → 2025)
   if (year < 100) {
     year = 2000 + year;
   }
@@ -142,26 +139,23 @@ function parseGermanDateToISO(text) {
   const dd = String(day).padStart(2, "0");
   const mm = String(month).padStart(2, "0");
   const yyyy = String(year);
-
-  // ISO-Format für Server & Validierung
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// --------------------------------------------------------
-// Termin-Daten sammeln
-// Slots: name, date (ISO), time, phone
-// --------------------------------------------------------
+// -----------------------------
+// Termin-Slots sammeln
+// name, date (ISO), time, email, phone
+// -----------------------------
 function collectAppointmentSlots(msg, prev) {
   const text = msg.toLowerCase();
   let slots = { ...prev };
 
-  // NAME:
+  // Name
   if (!slots.name) {
     const m = text.match(/(ich bin|mein name ist)\s+([a-zA-Zäöüß ]+)/);
     if (m) {
       slots.name = m[2].trim();
     } else {
-      // wenn nur Name kommt, z.B. "Tom" oder "Tom Müller"
       const single = msg.trim();
       if (
         single.length > 1 &&
@@ -173,13 +167,13 @@ function collectAppointmentSlots(msg, prev) {
     }
   }
 
-  // DATUM: immer neu parsen, und wenn gültig → überschreiben
+  // Datum (überschreibt bei neuem Datum)
   const isoDate = parseGermanDateToISO(text);
   if (isoDate) {
-    slots.date = isoDate; // z.B. "2025-12-23"
+    slots.date = isoDate;
   }
 
-  // UHRZEIT: auch überschreiben, wenn neu erkannt
+  // Uhrzeit
   const mTime1 = text.match(/\b(\d{1,2}):(\d{2})\b/);
   const mTime2 = text.match(/\b(\d{1,2})\s*uhr\b/);
   if (mTime1) {
@@ -191,25 +185,31 @@ function collectAppointmentSlots(msg, prev) {
     slots.time = `${h}:00`;
   }
 
-  // TELEFON: jede Folge von mindestens 6 Ziffern
+  // E-Mail
+  const mEmail = msg.match(/\S+@\S+\.\S+/);
+  if (mEmail) {
+    slots.email = mEmail[0];
+  }
+
+  // Telefonnummer optional
   const mPhone = text.match(/(\d{6,})/);
   if (mPhone) {
     slots.phone = mPhone[1];
   }
 
-  // komplett?
-  const complete = !!(slots.name && slots.date && slots.time && slots.phone);
+  // komplett? (Name, Datum, Zeit, E-Mail)
+  const complete = !!(slots.name && slots.date && slots.time && slots.email);
 
   const missing = [];
   if (!slots.name) missing.push("deinen Namen");
   if (!slots.date) missing.push("das Datum");
   if (!slots.time) missing.push("die Uhrzeit");
-  if (!slots.phone) missing.push("deine Telefonnummer");
+  if (!slots.email) missing.push("deine E-Mail-Adresse");
 
   let nextPrompt = "";
   if (complete) {
     nextPrompt =
-      "Perfekt 👍 Ich habe alles: Name, Datum, Uhrzeit und Telefonnummer. Soll ich den Termin jetzt an dein Salon-Team schicken?";
+      "Perfekt 👍 Ich habe Name, Datum, Uhrzeit und E-Mail. Soll ich den Termin jetzt an dein Salon-Team schicken?";
   } else if (missing.length === 1) {
     nextPrompt = `Alles klar 😊 Ich brauche noch ${missing[0]}.`;
   } else {
@@ -221,10 +221,10 @@ function collectAppointmentSlots(msg, prev) {
   return { slots, complete, nextPrompt };
 }
 
-// --------------------------------------------------------
-// Fallback-Antwort (wenn nichts passt)
-// --------------------------------------------------------
-function answerGeneral(msg) {
+// -----------------------------
+// Fallback-Antwort
+// -----------------------------
+function answerGeneral() {
   const responses = [
     "Gern 🙂 Was möchtest du genau wissen?",
     "Okay 😊 Wie kann ich dir helfen?",
