@@ -7,12 +7,12 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <!-- Overlay: Anmeldung + Sprache -->
+  <!-- Vollflächiges weißes Overlay: Anmeldung + Sprache -->
   <div id="welcome_overlay" class="overlay">
     <div class="welcome-card">
       <h2>Willkommen im Salon-Assistenten</h2>
       <p class="welcome-sub">
-        Bitte melde dich kurz mit deiner E-Mail an und wähle eine Sprache, bevor du mit dem Assistenten startest.
+        Bitte gib kurz deine E-Mail ein und wähle die Sprache, bevor du startest.
       </p>
 
       <div class="form-row">
@@ -38,7 +38,7 @@
       </button>
 
       <p class="welcome-note">
-        Deine Angaben werden nur für diese Sitzung genutzt und nicht gespeichert.
+        Deine Angaben werden nur für diese Sitzung genutzt und nicht dauerhaft gespeichert.
       </p>
     </div>
   </div>
@@ -49,7 +49,7 @@
         <div class="brand-mark">SC</div>
         <div class="brand-text">
           <h1 id="company_name">Ihr Salon</h1>
-          <p>Digitaler Call- & Chat-Agent für Beratung und Terminanfragen</p>
+          <p>Digitaler Call- & Chat-Agent</p>
         </div>
       </div>
       <div class="brand-contact">
@@ -60,100 +60,55 @@
     </header>
 
     <main class="main">
-      <section class="main-card">
-        <div class="main-left">
-          <section class="hero">
-            <div class="hero-text">
-              <h2>Ihr persönlicher Salon-Assistent</h2>
-              <p>
-                Stellen Sie Fragen, lassen Sie sich beraten oder geben Sie eine Terminanfrage auf –
-                per Sprache oder Text.
-              </p>
-            </div>
-            <div class="hero-actions">
-              <button id="mic_btn" aria-label="Mikrofon aktivieren">
-                <span class="mic-icon">🎙️</span>
-                <span class="mic-label">Sprechen</span>
-              </button>
-              <span id="mic_status" class="muted">bereit</span>
-            </div>
-          </section>
+      <section class="chat-card">
+        <header class="chat-header">
+          <div class="chat-titles">
+            <h2>Salon-Assistent</h2>
+            <p>Stelle Fragen oder vereinbare einen Termin – per Text oder Sprache.</p>
+          </div>
+          <button id="mic_btn" aria-label="Mikrofon aktivieren" class="mic-round">
+            🎙️
+          </button>
+        </header>
 
-          <section class="chat">
-            <div class="service-row">
-              <label for="service_select">Gewünschte Leistung</label>
-              <select id="service_select">
-                <option value="">Bitte auswählen (optional)</option>
-                <option value="Haarschnitt">Haarschnitt</option>
-                <option value="Farbe">Farbe</option>
-                <option value="Styling">Styling</option>
-                <option value="Bart">Bartpflege</option>
-                <option value="Sonstiges">Sonstiges / Kombination</option>
-              </select>
-            </div>
-
-            <div id="transcript" class="transcript"></div>
-
-            <div id="typing_indicator" class="typing hidden">
-              Agent tippt<span class="dots"><span>.</span><span>.</span><span>.</span></span>
-            </div>
-
-            <div class="input-row">
-              <input
-                id="text_input"
-                type="text"
-                placeholder="Frage stellen oder Termindaten mit E-Mail eingeben …"
-              />
-              <button id="send_btn">Senden</button>
-            </div>
-
-            <div class="cta-row">
-              <button id="confirm_btn" class="primary" disabled>
-                Terminanfrage absenden
-              </button>
-              <small id="confirm_hint" class="muted">
-                Wird aktiv, sobald Name, Datum, Uhrzeit und E-Mail vorliegen.
-              </small>
-            </div>
-          </section>
+        <div class="service-row">
+          <label for="service_select">Gewünschte Leistung (optional)</label>
+          <select id="service_select">
+            <option value="">Keine Auswahl</option>
+            <option value="Haarschnitt">Haarschnitt</option>
+            <option value="Farbe">Farbe</option>
+            <option value="Styling">Styling</option>
+            <option value="Bart">Bartpflege</option>
+            <option value="Sonstiges">Sonstiges / Kombination</option>
+          </select>
         </div>
 
-        <aside class="main-right">
-          <section class="info-card">
-            <h3>Wie der Assistent hilft</h3>
-            <ul>
-              <li>Beantwortet allgemeine Fragen zum Salon 🧴</li>
-              <li>Hilft bei Terminanfragen und leitet sie ans Team weiter 📅</li>
-              <li>Unterstützt in Deutsch, Englisch und Türkisch 🌍</li>
-            </ul>
-            <p class="muted small">
-              Für verbindliche Zusagen und spezielle Wünsche ist das Team im Salon zuständig.
-            </p>
-          </section>
+        <div id="transcript" class="transcript"></div>
 
-          <section class="qr-card">
-            <h3>Per QR-Code öffnen</h3>
-            <p class="muted small">
-              Scannen Sie den Code, um den Assistenten direkt auf dem Smartphone zu nutzen.
-            </p>
-            <div class="qr-box">
-              <img id="qr_image" alt="QR-Code zum Salon-Assistenten" />
-            </div>
-          </section>
-        </aside>
+        <div id="typing_indicator" class="typing hidden">
+          Agent tippt<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+        </div>
+
+        <div class="input-row">
+          <input
+            id="text_input"
+            type="text"
+            placeholder="Frage stellen oder Termindaten mit E-Mail eingeben …"
+          />
+          <button id="send_btn">Senden</button>
+        </div>
       </section>
 
       <section class="feedback">
         <h3>Feedback & Rückmeldung</h3>
         <p class="muted small">
-          Hat etwas nicht geklappt oder haben Sie eine Idee zur Verbesserung? Schreiben Sie es hier auf –
-          die Nachricht wird direkt an das Team gesendet.
+          Wenn etwas nicht wie erwartet funktioniert oder du eine Idee hast, schreib es hier – die Nachricht wird an das Team gesendet.
         </p>
         <div class="feedback-row">
           <textarea
             id="feedback_text"
             rows="3"
-            placeholder="Ihr Feedback oder Ihre Nachricht an den Salon …"
+            placeholder="Dein Feedback an den Salon …"
           ></textarea>
         </div>
         <div class="feedback-row feedback-actions">
@@ -173,3 +128,5 @@
   <script src="/app.js" type="module"></script>
 </body>
 </html>
+
+  
