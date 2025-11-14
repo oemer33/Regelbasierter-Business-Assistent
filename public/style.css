@@ -27,7 +27,7 @@ body {
 }
 
 .topbar {
-  max-width: 1100px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 1.2rem 1.5rem;
   display: flex;
@@ -87,36 +87,52 @@ body {
   color: var(--gold);
 }
 
-/* Hauptkarte */
+/* Hauptlayout */
+
+.main {
+  max-width: 1120px;
+  margin: 0 auto 2rem;
+  padding: 0 1.5rem 2rem;
+}
 
 .main-card {
-  max-width: 1100px;
-  margin: 0 auto 1.5rem;
-  padding: 1rem 1.5rem 2rem;
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.3fr);
+  gap: 1.5rem;
   background: var(--card);
   border-radius: 20px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.06);
   border: 1px solid var(--border-soft);
+  padding: 1.3rem 1.5rem 1.5rem;
 }
+
+.main-left,
+.main-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Hero / Kopfbereich */
 
 .hero {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1.5rem;
-  padding-bottom: 1rem;
+  gap: 1.2rem;
+  padding-bottom: 0.8rem;
   border-bottom: 1px dashed var(--border-soft);
 }
 
 .hero-text h2 {
-  margin: 0 0 0.4rem;
-  font-size: 1.4rem;
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
 }
 
 .hero-text p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .hero-actions {
@@ -158,24 +174,50 @@ body {
   color: var(--muted);
 }
 
+.small {
+  font-size: 0.85rem;
+}
+
 /* Chat-Bereich */
 
 .chat {
-  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
 }
+
+.service-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.service-row label {
+  font-weight: 600;
+}
+
+.service-row select {
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  padding: 0.45rem 0.7rem;
+  font-size: 0.88rem;
+  background: #fdfbf7;
+}
+
+/* Transcript */
 
 .transcript {
   margin-top: 0.3rem;
   background: #fbf8f3;
   border-radius: 16px;
   border: 1px solid var(--border-soft);
-  min-height: 180px;
-  max-height: 260px;
+  min-height: 170px;
+  max-height: 240px;
   overflow-y: auto;
   padding: 0.75rem 0.8rem;
 }
-
-/* Nachrichten: wir zeigen nur die letzten paar – siehe JS */
 
 .msg {
   display: flex;
@@ -206,10 +248,47 @@ body {
   border-color: rgba(212, 162, 75, 0.3);
 }
 
+/* Tipp-Animation */
+
+.typing {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.typing .dots span {
+  animation: blink 1s infinite alternate;
+  display: inline-block;
+  padding: 0 1px;
+}
+
+.typing .dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing .dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@keyframes blink {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Eingabezeile */
 
 .input-row {
-  margin-top: 0.8rem;
+  margin-top: 0.5rem;
   display: flex;
   gap: 0.4rem;
 }
@@ -244,14 +323,14 @@ body {
   background: #141210;
 }
 
-/* CTA Button */
+/* CTA */
 
 .cta-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem;
-  margin-top: 0.8rem;
+  margin-top: 0.4rem;
 }
 
 .primary {
@@ -269,28 +348,150 @@ body {
   cursor: not-allowed;
 }
 
-/* Info */
-
-.info {
-  margin-top: 1.2rem;
-  font-size: 0.85rem;
+.primary.secondary {
+  background: #ffffff;
+  color: var(--accent-dark);
+  border: 1px solid var(--border-soft);
 }
 
-.info details {
+/* Rechte Spalte (Info + QR) */
+
+.info-card,
+.qr-card {
+  background: #fbf8f3;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  padding: 0.9rem 1rem;
+}
+
+.info-card h3,
+.qr-card h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+}
+
+.info-card ul {
+  padding-left: 1.1rem;
+  margin: 0.2rem 0 0.4rem;
+  font-size: 0.9rem;
+}
+
+.qr-box {
+  margin-top: 0.4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-box img {
+  width: 140px;
+  height: 140px;
   border-radius: 12px;
-  border: 1px dashed var(--border-soft);
-  padding: 0.7rem 0.8rem;
-  background: #fdfaf5;
+  background: #fff;
+  border: 1px solid var(--border-soft);
+  padding: 0.4rem;
 }
 
-.info summary {
-  cursor: pointer;
+/* Feedback */
+
+.feedback {
+  margin-top: 1.2rem;
+  background: var(--card);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  padding: 0.9rem 1rem 1.1rem;
+}
+
+.feedback h3 {
+  margin: 0 0 0.4rem;
+}
+
+.feedback-row {
+  margin-top: 0.4rem;
+}
+
+#feedback_text {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  padding: 0.6rem 0.7rem;
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 80px;
+  background: #fbf8f3;
+}
+
+.feedback-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Overlay (Login / Sprache) */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 8, 6, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.welcome-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border-radius: 20px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+  padding: 1.4rem 1.6rem 1.2rem;
+}
+
+.welcome-card h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1.35rem;
+}
+
+.welcome-sub {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.form-row {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.form-row label {
   font-weight: 600;
 }
 
-.info p {
-  margin: 0.3rem 0 0;
+.form-row input,
+.form-row select {
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  background: #fdfbf7;
+}
+
+.wide {
+  width: 100%;
+  margin-top: 0.9rem;
+  justify-content: center;
+}
+
+.welcome-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
   color: var(--muted);
+  text-align: center;
 }
 
 /* Footer */
@@ -303,16 +504,11 @@ body {
   color: var(--muted);
 }
 
-/* Responsive */
+/* Responsiv */
 
-@media (max-width: 780px) {
-  .topbar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .brand-contact {
-    align-items: flex-start;
+@media (max-width: 900px) {
+  .main-card {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .hero {
@@ -321,6 +517,17 @@ body {
   }
 
   .hero-actions {
+    align-items: flex-start;
+  }
+
+  .brand-contact {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    flex-direction: column;
     align-items: flex-start;
   }
 }
