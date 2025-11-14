@@ -1,8 +1,7 @@
 // =======================================
 // api/appointment.js
-// - Nimmt Termindaten entgegen
-// - Verschickt E-Mail direkt mit nodemailer
-// - KEIN saveAppointment mehr (Fehlerquelle entfernt)
+// - Termindaten empfangen
+// - E-Mail direkt an Team schicken
 // =======================================
 
 const nodemailer = require("nodemailer");
@@ -14,20 +13,18 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const { name, datetime, contact, notes } = req.body || {};
+    const { name, datetime, contact, service, notes } = req.body || {};
 
-    // Simple Validierung
     if (!name || !datetime || !contact) {
       res.status(400).json({
         ok: false,
         error: "Ungültige oder unvollständige Termindaten",
         detail:
-          "Es werden Name, Datum/Uhrzeit (datetime) und Kontakt benötigt."
+          "Es werden Name, Datum/Uhrzeit (datetime) und eine E-Mail-Adresse als Kontakt benötigt."
       });
       return;
     }
 
-    // SMTP-Umgebungsvariablen laden
     const host = process.env.SMTP_HOST;
     const port = Number(process.env.SMTP_PORT || 587);
     const secure =
@@ -49,7 +46,6 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // Transporter einrichten
     const transporter = nodemailer.createTransport({
       host,
       port,
@@ -60,16 +56,16 @@ module.exports = async (req, res) => {
       }
     });
 
-    // E-Mail-Inhalt
     const subject = "Neue Terminanfrage aus dem Salon-Assistenten";
     const textLines = [
       "Es ist eine neue Terminanfrage eingegangen:",
       "",
       `Name: ${name}`,
       `Wunschtermin: ${datetime}`,
-      `Kontakt: ${contact}`,
+      `Gewünschte Leistung: ${service || "nicht angegeben"}`,
+      `Kontakt (E-Mail oder Tel.): ${contact}`,
       "",
-      `Notizen: ${notes || "-"}`,
+      `Notizen aus dem Chat: ${notes || "-"}`,
       "",
       "Bitte meldet euch beim Kunden, um den Termin zu bestätigen, zu verschieben oder abzusagen."
     ];
@@ -81,10 +77,8 @@ module.exports = async (req, res) => {
       text: textLines.join("\n")
     };
 
-    // E-Mail senden
     await transporter.sendMail(mailOptions);
 
-    // Erfolgsantwort an Frontend
     res.status(200).json({
       ok: true,
       message:
