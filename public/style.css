@@ -97,7 +97,7 @@ body {
   padding: 0 1.2rem 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 /* Chat-Karte */
@@ -133,32 +133,6 @@ body {
   color: var(--muted);
 }
 
-/* Rundes Mikrofon */
-
-.mic-round {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, var(--gold), #f2c779);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 10px 20px rgba(212, 162, 75, 0.4);
-  font-size: 1.2rem;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
-}
-
-.mic-round:hover {
-  transform: translateY(-1px);
-}
-
-.mic-round.recording {
-  background: linear-gradient(135deg, #ff7d7d, #f4a6a6);
-  box-shadow: 0 10px 22px rgba(255, 125, 125, 0.55);
-}
-
 /* Service-Zeile */
 
 .service-row {
@@ -180,14 +154,14 @@ body {
   background: #fdfbf7;
 }
 
-/* Transcript / Chatverlauf */
+/* Transcript / Chatverlauf – GRÖSSER GEMACHT */
 
 .transcript {
   background: #fbf8f3;
   border-radius: 14px;
   border: 1px solid var(--border-soft);
-  min-height: 180px;
-  max-height: 260px;
+  min-height: 260px;   /* vorher ~180, jetzt größer */
+  max-height: 380px;   /* mehr Platz für Chat */
   overflow-y: auto;
   padding: 0.7rem 0.8rem;
 }
@@ -258,11 +232,12 @@ body {
   }
 }
 
-/* Eingabezeile */
+/* Eingabezeile – Text + Mic + Senden */
 
 .input-row {
   margin-top: 0.4rem;
   display: flex;
+  align-items: center;
   gap: 0.4rem;
 }
 
@@ -282,47 +257,83 @@ body {
   box-shadow: 0 0 0 1px rgba(212, 162, 75, 0.3);
 }
 
-#send_btn {
+/* Rundes Mikrofon */
+
+.mic-round {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--gold), #f2c779);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(212, 162, 75, 0.4);
+  font-size: 1.2rem;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+}
+
+.mic-round:hover {
+  transform: translateY(-1px);
+}
+
+.mic-round.recording {
+  background: linear-gradient(135deg, #ff7d7d, #f4a6a6);
+  box-shadow: 0 10px 22px rgba(255, 125, 125, 0.55);
+}
+
+/* etwas kleiner für unten */
+
+.small-round {
+  width: 40px;
+  height: 40px;
+  font-size: 1.05rem;
+}
+
+/* Senden-Button */
+
+.send-btn {
   border-radius: 999px;
   border: none;
   padding: 0.55rem 1rem;
   background: #2f2b27;
   color: #fefaf2;
   font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
-  font-size: 0.9rem;
 }
 
-#send_btn:hover {
-  background: #141210;
+.send-btn:hover {
+  background: #171513;
 }
 
-/* Feedback */
+/* Feedback – DÜNNER GEMACHT */
 
 .feedback {
   background: var(--card);
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid var(--border-soft);
-  padding: 0.85rem 1rem 1.1rem;
+  padding: 0.6rem 0.9rem 0.8rem;  /* weniger Padding = dünner */
 }
 
 .feedback h3 {
   margin: 0 0 0.3rem;
-  font-size: 1.02rem;
+  font-size: 0.98rem;
 }
 
 .feedback-row {
-  margin-top: 0.4rem;
+  margin-top: 0.25rem;
 }
 
 #feedback_text {
   width: 100%;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid var(--border-soft);
-  padding: 0.6rem 0.7rem;
-  font-size: 0.9rem;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.88rem;
   resize: vertical;
-  min-height: 90px;
+  min-height: 60px;   /* vorher 90, jetzt dünner */
   background: #fbf8f3;
 }
 
@@ -337,7 +348,7 @@ body {
 .primary {
   border-radius: 999px;
   border: none;
-  padding: 0.55rem 1.1rem;
+  padding: 0.5rem 1.1rem;
   background: linear-gradient(130deg, var(--accent-dark), #3b352c);
   color: #fefaf3;
   font-weight: 600;
@@ -453,7 +464,12 @@ body {
   }
 
   .mic-round {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .small-round {
+    width: 38px;
+    height: 38px;
   }
 }
