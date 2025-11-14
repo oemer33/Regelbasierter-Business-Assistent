@@ -39,13 +39,25 @@
       </section>
 
       <section class="chat">
+        <div class="service-row">
+          <label for="service_select">Gewünschte Leistung:</label>
+          <select id="service_select">
+            <option value="">Noch nicht festgelegt</option>
+            <option value="Haarschnitt">Haarschnitt</option>
+            <option value="Farbe">Farbe</option>
+            <option value="Styling">Styling</option>
+            <option value="Bart">Bartpflege</option>
+            <option value="Sonstiges">Sonstiges / Kombination</option>
+          </select>
+        </div>
+
         <div id="transcript" class="transcript"></div>
 
         <div class="input-row">
           <input
             id="text_input"
             type="text"
-            placeholder="Frage stellen oder Termindaten eingeben …"
+            placeholder="Frage stellen oder Termindaten mit E-Mail eingeben …"
           />
           <button id="send_btn">Senden</button>
         </div>
@@ -55,7 +67,7 @@
             Terminanfrage absenden
           </button>
           <small id="confirm_hint" class="muted">
-            Wird aktiv, sobald Name, Datum, Uhrzeit und Kontakt vorliegen.
+            Wird aktiv, sobald Name, Datum, Uhrzeit und E-Mail vorliegen.
           </small>
         </div>
       </section>
@@ -71,10 +83,37 @@
           </p>
           <p>
             Sprachnachrichten werden nur im Browser verarbeitet. Bei einer
-            Terminanfrage werden Name, gewünschte Zeit und Kontaktdaten an das
-            Team gesendet.
+            Terminanfrage werden Name, gewünschte Zeit, E-Mail-Adresse und ggf.
+            Telefonnummer an das Team gesendet.
           </p>
         </details>
+      </section>
+
+      <section class="feedback">
+        <h3>Feedback & Rückmeldung</h3>
+        <p class="muted">
+          Hat etwas nicht geklappt oder haben Sie einen Wunsch? Schreiben Sie uns eine kurze Rückmeldung – sie wird direkt an das Team weitergeleitet.
+        </p>
+        <div class="feedback-row">
+          <input
+            id="feedback_email"
+            type="email"
+            placeholder="Ihre E-Mail-Adresse (für Rückfragen)"
+          />
+        </div>
+        <div class="feedback-row">
+          <textarea
+            id="feedback_text"
+            rows="3"
+            placeholder="Ihr Feedback oder Ihre Nachricht an den Salon …"
+          ></textarea>
+        </div>
+        <div class="feedback-row">
+          <button id="feedback_send_btn" class="primary secondary">
+            Feedback senden
+          </button>
+          <small id="feedback_status" class="muted"></small>
+        </div>
       </section>
     </main>
 
