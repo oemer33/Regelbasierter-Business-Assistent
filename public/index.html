@@ -8,7 +8,7 @@
 </head>
 <body>
   <!-- Vollflächiges weißes Overlay: Anmeldung + Sprache -->
-  <div id="welcome_overlay" class="overlay">
+  <div id="welcome_overlay" class="overlay overlay-white">
     <div class="welcome-card">
       <h2>Willkommen im Salon-Assistenten</h2>
       <p class="welcome-sub">
@@ -43,82 +43,114 @@
     </div>
   </div>
 
-  <div class="page">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">SC</div>
-        <div class="brand-text">
-          <h1 id="company_name">Ihr Salon</h1>
-          <p>Digitaler Call- & Chat-Agent</p>
+  <!-- Seitenpanel mit Salon-Infos (öffnet über Icon oben links) -->
+  <aside id="info_panel" class="side-panel hidden">
+    <div class="side-panel-inner">
+      <button id="close_panel" class="icon-btn close-btn" aria-label="Panel schließen">×</button>
+      <div class="panel-header">
+        <div class="brand-mark panel-mark">SC</div>
+        <div>
+          <h3 id="panel_name">Ihr Salon</h3>
+          <p class="muted small">Kontakt & Standort</p>
         </div>
       </div>
-      <div class="brand-contact">
-        <span id="address"></span>
-        <a id="phone"></a>
-        <a id="email"></a>
+      <div class="panel-body">
+        <p id="panel_address"></p>
+        <p><a id="panel_phone"></a></p>
+        <p><a id="panel_email"></a></p>
       </div>
+    </div>
+  </aside>
+
+  <!-- Drei-Punkte-Menü: Leistung + Feedback -->
+  <div id="more_menu" class="overlay overlay-dim hidden">
+    <div class="more-card">
+      <div class="more-header">
+        <h3>Einstellungen & Feedback</h3>
+        <button id="more_close_btn" class="icon-btn" aria-label="Menü schließen">×</button>
+      </div>
+
+      <div class="form-row">
+        <label for="service_select">Gewünschte Leistung</label>
+        <select id="service_select">
+          <option value="">Keine Auswahl</option>
+          <option value="Haarschnitt">Haarschnitt</option>
+          <option value="Farbe">Farbe</option>
+          <option value="Styling">Styling</option>
+          <option value="Bart">Bartpflege</option>
+          <option value="Sonstiges">Sonstiges / Kombination</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="feedback_text">Feedback an den Salon</label>
+        <textarea
+          id="feedback_text"
+          rows="3"
+          placeholder="Wenn etwas nicht wie erwartet funktioniert oder du eine Idee hast, schreib es hier – die Nachricht wird an das Team gesendet."
+        ></textarea>
+      </div>
+
+      <div class="feedback-actions">
+        <button id="feedback_send_btn" class="primary secondary">
+          Feedback senden
+        </button>
+        <small id="feedback_status" class="muted"></small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Haupt-App, Chat wie ChatGPT -->
+  <div class="app-shell">
+    <header class="app-bar">
+      <button id="menu_btn" class="icon-btn" aria-label="Salon-Infos öffnen">
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+
+      <div class="app-title">
+        <div class="brand-mark small-mark">SC</div>
+        <div class="app-title-text">
+          <span id="company_name" class="app-name">Ihr Salon</span>
+          <span class="app-subtitle">Salon-Assistent</span>
+        </div>
+      </div>
+
+      <button id="more_btn" class="icon-btn" aria-label="Mehr Optionen">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </button>
     </header>
 
-    <main class="main">
-      <section class="chat-card">
-        <header class="chat-header">
-          <div class="chat-titles">
-            <h2>Salon-Assistent</h2>
-            <p>Stelle Fragen oder vereinbare einen Termin – per Text oder Sprache.</p>
-          </div>
-        </header>
-
-        <div class="service-row">
-          <label for="service_select">Gewünschte Leistung (optional)</label>
-          <select id="service_select">
-            <option value="">Keine Auswahl</option>
-            <option value="Haarschnitt">Haarschnitt</option>
-            <option value="Farbe">Farbe</option>
-            <option value="Styling">Styling</option>
-            <option value="Bart">Bartpflege</option>
-            <option value="Sonstiges">Sonstiges / Kombination</option>
-          </select>
-        </div>
-
+    <main class="chat-layout">
+      <section class="chat-window" id="chat_window">
         <div id="transcript" class="transcript"></div>
 
         <div id="typing_indicator" class="typing hidden">
           Agent tippt<span class="dots"><span>.</span><span>.</span><span>.</span></span>
         </div>
+      </section>
 
-        <div class="input-row">
+      <section class="input-bar">
+        <div class="input-inner">
           <input
             id="text_input"
             type="text"
-            placeholder="Frage stellen oder Termindaten mit E-Mail eingeben …"
+            placeholder="Frage stellen oder Termin mit Datum, Uhrzeit & E-Mail eingeben …"
           />
-
-          <button
-            id="mic_btn"
-            aria-label="Spracheingabe"
-            class="mic-round small-round"
-          >
-            🎙️
-          </button>
-
-          <button id="send_btn" class="send-btn">➤</button>
-        </div>
-      </section>
-
-      <section class="feedback">
-        <h3>Feedback & Rückmeldung</h3>
-        <div class="feedback-row">
-          <textarea
-            id="feedback_text"
-            rows="2"
-            placeholder="Wenn etwas nicht wie erwartet funktioniert oder du eine Idee hast, schreib es hier – die Nachricht wird an das Team gesendet."
-          ></textarea>
-        </div>
-        <div class="feedback-row feedback-actions">
-          <button id="feedback_send_btn" class="primary secondary">
-            Feedback senden
-          </button>
-          <small id="feedback_status" class="muted"></small>
+          <div class="input-buttons">
+            <button
+              id="mic_btn"
+              aria-label="Spracheingabe starten"
+              class="mic-round small-round"
+            >
+              🎙️
+            </button>
+            <button id="send_btn" class="send-btn" aria-label="Nachricht senden">
+              ➤
+            </button>
+          </div>
         </div>
       </section>
     </main>
